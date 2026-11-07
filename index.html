@@ -1,0 +1,1891 @@
+<!doctype html>
+<html lang="lt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ginklų Egzamino Testas</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f4f4f9;
+      }
+      h1,
+      h2 {
+        text-align: center;
+        color: #333;
+      }
+      .tabs {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+      .tabs button {
+        padding: 10px 20px;
+        margin: 0 5px;
+        cursor: pointer;
+        border: none;
+        background-color: #ddd;
+        font-size: 16px;
+        border-radius: 5px;
+      }
+      .tabs button.active {
+        background-color: #4caf50;
+        color: white;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .question {
+        font-size: 18px;
+        margin-bottom: 15px;
+        font-weight: bold;
+      }
+      .options button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .options button:hover {
+        background: #f0f0f0;
+      }
+      .options button.correct {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+      }
+      .options button.wrong {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+      }
+      .options button:disabled {
+        cursor: default;
+      }
+      .stats {
+        margin-top: 20px;
+        padding: 15px;
+        background: #e9ecef;
+        border-radius: 5px;
+      }
+      .exam-review {
+        margin-top: 25px;
+      }
+      .review-question {
+        margin: 15px 0;
+        padding: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        overflow-wrap: anywhere;
+      }
+      .review-status {
+        font-weight: bold;
+      }
+      .review-status.correct {
+        color: #155724;
+      }
+      .review-status.wrong {
+        color: #721c24;
+      }
+      .review-options {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 0;
+      }
+      .review-options li {
+        padding: 10px;
+        margin-top: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      .review-options .correct {
+        background: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+      }
+      .review-options .wrong {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+      }
+      .answer-label {
+        display: block;
+        margin-top: 5px;
+        font-weight: bold;
+      }
+      .next-btn {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin-top: 15px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .next-btn:hover {
+        background-color: #0056b3;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Neoficialus Ginklų Egzamino Testas</h1>
+
+    <div class="tabs">
+      <button id="btn-exam" class="active" onclick="switchTab('exam')">
+        Egzamino rėžimas
+      </button>
+      <button id="btn-learn" onclick="startLearn()">Mokymosi rėžimas</button>
+    </div>
+
+    <div id="exam-container" class="container">
+      <h2>Egzaminas</h2>
+      <div id="exam-intro">
+        <p>
+          Egzaminą sudaro 10 atsitiktinai parinktų klausimų. Leidžiama 1 klaida.
+        </p>
+        <p>
+          Laikas pradedamas skaičiuoti paspaudus „Pradėti egzaminą“. Egzaminą
+          galite baigti bet kuriuo metu. Neatsakyti klausimai įskaičiuojami kaip
+          klaidos.
+        </p>
+        <button class="next-btn" onclick="startExam()">Pradėti egzaminą</button>
+      </div>
+      <p id="exam-progress" class="hidden"></p>
+      <p id="exam-timer" class="hidden">Laikas: 00:00</p>
+      <div id="exam-question-area" class="hidden"></div>
+      <button id="exam-end-btn" class="next-btn hidden" onclick="endExam()">
+        Baigti testą ir peržiūrėti rezultatus
+      </button>
+      <div id="exam-result" class="hidden"></div>
+    </div>
+
+    <div id="learn-container" class="container hidden">
+      <h2>Mokymasis</h2>
+      <div id="learn-question-area"></div>
+      <button
+        id="learn-next-btn"
+        class="hidden next-btn"
+        onclick="nextLearnQuestion()"
+      >
+        Kitas klausimas
+      </button>
+      <div class="stats" id="learn-stats">
+        <p>Pateikta klausimų: <span id="stat-total">0</span></p>
+        <p>
+          Teisingai: <span id="stat-correct">0</span> (<span
+            id="stat-correct-pct"
+            >0</span
+          >%)
+        </p>
+        <p>
+          Neteisingai: <span id="stat-wrong">0</span> (<span id="stat-wrong-pct"
+            >0</span
+          >%)
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Klausimų bazė pagal PDF dokumentą.
+      const allQuestions = [
+        {
+          q: "1. Civilinė ginklų, ginklų priedėlių, šaudmenų apyvarta yra:",
+          options: {
+            a: "specialaus statuso subjektų vykdoma ginklų apyvarta;",
+            b: "ginklų, ginklų priedėlių, šaudmenų apyvarta, kurią vykdo fiziniai ir juridiniai asmenys, išskyrus specialaus statuso subjektus;",
+            c: "Europos fizinių ir Europos juridinių asmenų vykdoma veikla, kuri apima ginklų, ginklų priedėlių, šaudmenų gamybą, taisymą, pardavimą, perdavimą, įgijimą, dovanojimą, laikymą, saugojimą, gabenimą, nešiojimąsi;",
+            d: "bet kokie veiksmai atliekami su šaunamaisiais ginklais, kuriuos atlieka Europos fiziniai asmenys ir Lietuvoje registruoti ūkio subjektai.",
+          },
+          correct: "b",
+        },
+        {
+          q: "2. Ginklo ir šaudmenų nešiojimasis yra:",
+          options: {
+            a: "ginklo, šaudmenų valdymas (faktinis turėjimas savo žinioje) fizinio asmens būste ar juridinio asmens patalpose arba kitose vietose, turinčiose aiškiai apibrėžtas ribas;",
+            b: "ginklo transportavimas (pervežimas, pernešimas) tokiomis sąlygomis, kurios užtikrina, kad ginklo nebus galima panaudoti nedelsiant (ginklas neužtaisytas, įdėtas į dėklą ar kitą tam tinkamą daiktą, dėtuvė išimta iš ginklo, šaudmenys išimti iš dėtuvės, būgnelio ir vamzdžio);",
+            c: "ginklo, šaudmenų turėjimas su savimi tokiomis sąlygomis, kuriomis ginklą galima panaudoti nedelsiant;",
+            d: "ginklo be šaudmenų turėjimas dėkle ar rankinėje prie savęs.",
+          },
+          correct: "c",
+        },
+        {
+          q: "3. Ginklo naudotojas yra:",
+          options: {
+            a: "fizinis asmuo, kuris turi teisę nešiotis ar laikyti tam tikros kategorijos ginklą ir kuriam ginklo savininkas suteikia teisę naudotis jo ginklu;",
+            b: "asmuo, turintis ginklą;",
+            c: "fizinis asmuo, kuriam ginklo savininkas pardavė ginklą;",
+            d: "fizinis asmuo, kuris turi teisę nešiotis ar laikyti tam tikros kategorijos ginklą ir kuris turi įsigijęs ginklus ir juos naudojantis Ginklų ir šaudmenų kontrolės įstatyme numatytiems tikslams.",
+          },
+          correct: "a",
+        },
+        {
+          q: "4. Ginklo ir šaudmenų gabenimas yra:",
+          options: {
+            a: "ginklo ir (ar) šaudmenų pervežimas, pernešimas ir kiti transportavimo būdai tokiomis sąlygomis, kurios užtikrina, kad nebūtų galimybės ginklo ir (ar) šaudmenų panaudoti nedelsiant;",
+            b: "ginklų, ginklų priedėlių, šaudmenų, jų dalių įvežimas į Lietuvos Respublikos muitų teritoriją iš Europos sąjungos muitų teritorijai priskiriamų šalių arba teritorijų;",
+            c: "ginklo ir (ar) šaudmenų laikymas, nešiojimasis, saugojimas, naudojimas;",
+            d: "ginklo ir (ar) šaudmenų pervežimas, pernešimas ir kiti transportavimo būdai tokiomis sąlygomis, kuriomis ginklą ir (ar) šaudmenis galima panaudoti nedelsiant.",
+          },
+          correct: "a",
+        },
+        {
+          q: "5. Ginklo turėjimas yra:",
+          options: {
+            a: "ginklo, šaudmenų laikymas, nešiojimasis, saugojimas, naudojimas;",
+            b: "ginklo gabenimas ir (ar) ginklo nešiojimas su savimi nepažeidžiant įstatymu nustatytų reikalavimų;",
+            c: "fiziniam asmeniui priklausančio ginklo saugojimas nustatytomis sąlygomis ir tvarka;",
+            d: "juridinio asmens darbuotojui patikėtas valdyti (nešiotis, naudoti) juridiniam asmeniui priklausantis ginklas.",
+          },
+          correct: "a",
+        },
+        {
+          q: "6. Kiek ginklų leidžiama įsigyti vienam asmeniui savigynos tikslams?",
+          options: {
+            a: "ne daugiau nei du;",
+            b: "ne daugiau nei vieną;",
+            c: "ginklų skaičius neribojamas;",
+            d: "vieną trumpąjį ir vieną ilgąjį šaunamąjį ginklą.",
+          },
+          correct: "c",
+        },
+        {
+          q: "7. Kiek ginklų leidžiama nešiotis vienam asmeniui savigynos tikslams?",
+          options: {
+            a: "ne daugiau nei du;",
+            b: "ne daugiau nei vieną;",
+            c: "ginklų skaičius neribojamas;",
+            d: "vieną trumpąjį ir vieną ilgąjį šaunamąjį ginklą.",
+          },
+          correct: "c",
+        },
+        {
+          q: "8. Kokius ginklus turint leidimą laikyti ar nešiotis ginklus savigynos tikslais leidžiama nešiotis?",
+          options: {
+            a: "visus ginklus, nurodytus leidime;",
+            b: "pistoletus, revolverius ir lygiavamzdžius šautuvus;",
+            c: "visus asmeniui priklausančius ginklus;",
+            d: "trumpuosius šaunamuosius ginklus.",
+          },
+          correct: "d",
+        },
+        {
+          q: "9. Dėl leidimo ginklui laikyti ar nešiotis išdavimo savigynai asmuo turi kreipti į:",
+          options: {
+            a: "policijos departamentą;",
+            b: "artimiausią policijos komisariatą;",
+            c: "Lietuvos Respublikos ginklų fondą;",
+            d: "apskrities vyriausiąjį policijos komisariatą.",
+          },
+          correct: "d",
+        },
+        {
+          q: "10. Leidimas laikyti ar nešiotis B kategorijos trumpuosius šaunamuosius ginklus išduodamas:",
+          options: {
+            a: "3 metams;",
+            b: "5 metams;",
+            c: "neterminuotai;",
+            d: "1 metams.",
+          },
+          correct: "b",
+        },
+        {
+          q: "11. Leidimas laikyti ar nešiotis C kategorijos dujinius šaunamuosius ginklus išduodamas:",
+          options: {
+            a: "3 metams;",
+            b: "5 metams;",
+            c: "neterminuotai;",
+            d: "1 metams.",
+          },
+          correct: "c",
+        },
+        {
+          q: "12. Savigynai B kategorijos trumpuosius šaunamuosius ginklus turi teisę įsigyti:",
+          options: {
+            a: "savigynai B kategorijos trumpuosius šaunamuosius ginklus, jų šovinius gali įsigyti ir turėti ne jaunesni kaip 23 metų nuolatiniai Lietuvos Respublikos gyventojai, išlaikę egzaminą ir gavę leidimą;",
+            b: "savigynai B kategorijos trumpuosius šaunamuosius ginklus, jų šovinius gali įsigyti ir turėti ne jaunesni kaip 23 metų asmenys, išlaikę egzaminą ir gavę leidimą;",
+            c: "savigynai B kategorijos trumpuosius šaunamuosius ginklus, jų šovinius gali įsigyti ir turėti ne jaunesni kaip 21 metų nuolatiniai Lietuvos Respublikos gyventojai, išlaikę egzaminą ir gavę leidimą;",
+            d: "savigynai B kategorijos trumpuosius šaunamuosius ginklus, jų šovinius gali įsigyti ir turėti ne jaunesni kaip 23 LR piliečiai, išlaikę egzaminą ir gavę leidimą.",
+          },
+          correct: "a",
+        },
+        {
+          q: "13. Savigynai B kategorijos ilguosius lygiavamzdžius šaunamuosius ginklus turi teisę įsigyti:",
+          options: {
+            a: "savigynai B kategorijos ilguosius lygiavamzdžius šaunamuosius ginklus gali įsigyti ir turėti ne jaunesni kaip 21 metų asmenys, išlaikę egzaminą ir gavę leidimą;",
+            b: "savigynai B kategorijos ilguosius lygiavamzdžius ginklus gali įsigyti ir turėti ne jaunesni kaip 21 metų nuolatiniai Lietuvos Respublikos gyventojai, išlaikę egzaminą ir gavę leidimą;",
+            c: "ilguosius lygiavamzdžius šaunamuosius ginklus galima įsigyti tik medžioklei ir profesinei veiklai;",
+            d: "savigynai B kategorijos ilguosius lygiavamzdžius šaunamuosius ginklus gali įsigyti ir turėti ne jaunesni kaip 23 metų asmenys, išlaikę egzaminą ir gavę leidimą.",
+          },
+          correct: "b",
+        },
+        {
+          q: "14. Savigynai C kategorijos dujinius pistoletus (revolverius) turi teisę įsigyti:",
+          options: {
+            a: "ne jaunesni kaip 21 metų asmenys;",
+            b: "ne jaunesni kaip 18 metų asmenys;",
+            c: "ne jaunesni kaip 23 metų asmenys;",
+            d: "ne jaunesni kaip 25 metų asmenys.",
+          },
+          correct: "a",
+        },
+        {
+          q: "15. Turintis leidimą laikyti ar nešiotis ginklus savigynai, asmuo kartu gali įsigyti ir turėti:",
+          options: {
+            a: "ne daugiau kaip 500 šaudmenų;",
+            b: "ne daugiau kaip 200 šaudmenų;",
+            c: "ne daugiau kaip 300 šaudmenų;",
+            d: "šaudmenų skaičius neribojamas.",
+          },
+          correct: "d",
+        },
+        {
+          q: "16. Ginklo įsigyti negali asmuo, kuriam dėl ginklo praradimo buvo panaikintas leidimas laikyti ar nešiotis ginklą ir nuo to nėra praėję:",
+          options: {
+            a: "1 metai;",
+            b: "3 metai;",
+            c: "2 metai;",
+            d: "5 metai.",
+          },
+          correct: "b",
+        },
+        {
+          q: "17. Kas yra ginklo ir (ar) šaudmenų laikymas?",
+          options: {
+            a: "ginklo ir (ar) šaudmenų nešiojimasis, saugojimas;",
+            b: "ginklo ir (ar) šaudmenų pervežimas, pernešimas ir kiti transportavimo būdai;",
+            c: "ginklo, šaudmenų valdymas (faktinis turėjimas savo žinioje) fizinio asmens būste ar juridinio asmens patalpose arba kitose vietose, turinčiose aiškiai apibrėžtas ribas.",
+            d: "ginklo ir (ar) šaudmenų turėjimas su savimi tokiomis sąlygomis, kuriomis ginklą ir (ar) šaudmenis galima panaudoti nedelsiant.",
+          },
+          correct: "c",
+        },
+        {
+          q: "18. Fizinis asmuo negali įsigyti ir turėti ginklų jei:",
+          options: {
+            a: "per pastaruosius 3 metus ne mažiau nei 2 kartus baustas už teisės aktų, reglamentuojančių medžioklę, pažeidimus;",
+            b: "per pastaruosius 3 metus baustas už šiurkštų teisės aktų, reglamentuojančių medžioklę, pažeidimą;",
+            c: "per metus pakartotinai padarė administracinį nusižengimą, kuriuo buvo šiurkščiai pažeisti medžioklę reglamentuojantys teisės aktai;",
+            d: "per pastaruosius 3 metus ne mažiau nei 5 kartus baustas už įvairius kelių eismo taisyklių pažeidimus.",
+          },
+          correct: "c",
+        },
+        {
+          q: "19. Kada turės teisę įsigyti ginklą savigynai fizinis asmuo, įsiteisėjusiu teismo nuosprendžiu pripažintas padaręs nusikaltimą, susijusį su disponavimu ginklais, šaudmenimis, sprogmenimis, už kurį Baudžiamajame kodekse numatyta didžiausia bausmė viršija 3 metus laisvės atėmimo ?",
+          options: {
+            a: "turės teisę išnykus teistumui;",
+            b: "turės teisę po asmens teistumo išnykimo arba panaikinimo praėjus 15 metų;",
+            c: "turės teisę po asmens teistumo išnykimo arba panaikinimo praėjus 3 metams;",
+            d: "teisės neturės.",
+          },
+          correct: "b",
+        },
+        {
+          q: "20. Su savigynai įsigytais trumpaisiais šaunamaisiais ginklais medžioti:",
+          options: {
+            a: "leidžiama ūkininkams, turintiems nuosavus žemės plotus;",
+            b: "leidžiama;",
+            c: "leidžiama medžioti ne su mažesnio kaip .38 Special kalibro ginklais, asmenims turintiems medžiotojo–selekcininko kvalifikaciją.",
+            d: "draudžiama.",
+          },
+          correct: "d",
+        },
+        {
+          q: "21. Trumpasis šaunamasis ginklas savigynai nešiojamas:",
+          options: {
+            a: "bet kurioje pašaliniams nematomoje vietoje;",
+            b: "tik specialiame ginklo dėkle;",
+            c: "tik rankinėje, rankinuke;",
+            d: "negali būti, tik gabenamas įstatymų nustatyta tvarka.",
+          },
+          correct: "a",
+        },
+        {
+          q: "22. Ar asmeniui leidžiama nešiotis parengtą šaudyti ginklą?",
+          options: {
+            a: "leidžiama;",
+            b: "leidžiama tik trumpuosius šaunamuosius ginklus;",
+            c: "draudžiama, išskyrus atvejus, kai tiesiogiai susiklosto aplinkybės, dėl kurių iškyla grėsmė asmens gyvybei ar sveikatai;",
+            d: "draudžiama.",
+          },
+          correct: "c",
+        },
+        {
+          q: "23. Asmens veiksmai radus ginklą ar šaudmenis:",
+          options: {
+            a: "nedelsiant nugabenti rastą ginklą į artimiausią policijos įstaigą;",
+            b: "nedelsiant pranešti policijos įstaigai ir nugabenti rastus ginklus ir šaudmenis į policijos įstaigą;",
+            c: "nedelsiant pranešti policijos įstaigai apie rastus ginklus ir šaudmenis;",
+            d: "ne ilgiau kaip per parą laiko ginklą pristatyti į Lietuvos Respublikos ginklų fondą.",
+          },
+          correct: "c",
+        },
+        {
+          q: "24. Asmuo radęs ginklą:",
+          options: {
+            a: "asmuo, radęs ginklą ar šaudmenų, privalo nedelsdamas apie tai pranešti teritorinei policijos įstaigai. Asmeniui draudžiama rastus ginklus ar šaudmenis gabenti į policijos įstaigą ar kitą vietą. Policija asmens rastus ginklus ar šaudmenis paima jų radimo vietoje;",
+            b: "privalo nedelsdamas apie tai pranešti teritorinei policijos įstaigai. Rastas ginklas pristatomas į policijos įstaigą, prieš tai pažymėjus radimo vietą;",
+            c: "privalo nedelsdamas apie tai pranešti teritorinei policijos įstaigai. Asmuo turi teisę pristatyti į policijos įstaigą B, C kategorijų ginklus, jei nori juos įteisinti savo vardu. Asmuo radęs A kategorijos ginklą privalo nedelsiant informuoti policiją ir vykdyti gautus nurodymus;",
+            d: "nedelsiant pristato jį į policijos įstaigą.",
+          },
+          correct: "a",
+        },
+        {
+          q: "25. Per kiek laiko apie ginklo vagystę ginklo savininkas teritorinei policijos įstaigai turi pranešti?",
+          options: {
+            a: "per 1 parą;",
+            b: "nedelsiant;",
+            c: "per 1 valandą;",
+            d: "per 6 valandas.",
+          },
+          correct: "b",
+        },
+        {
+          q: "26. A, B, C kategorijų ginklų, jų šaudmenų savininkui, naudotojui leidžiama:",
+          options: {
+            a: "ginklą gabenti neturint su savimi ginklo pažymėjimo;",
+            b: "vartoti alkoholinius gėrimus, narkotines, psichotropines ar kitas psichiką veikiančias medžiagas, panaudojus ginklą, iki bus patikrintas blaivumas ar apsvaigimas arba bus atsisakyta tai atlikti;",
+            c: "ginklą laikinai perleisti asmeniui, neturinčiam teisės laikyti ar nešiotis tos kategorijos ir paskirties ginklus šaudymo sporto varžybų, pratybų, mokymų metu, prižiūrint atsakingam už saugų šaudymą asmeniui;",
+            d: "ginklą nešiotis, gabenti apsvaigus nuo alkoholio (0,41 promilės ir daugiau), narkotinių, psichotropinių ar kitų psichiką veikiančių medžiagų.",
+          },
+          correct: "c",
+        },
+        {
+          q: "27. Teisėsaugos institucijų pareigūnų reikalavimu ginklus, šaudmenis ginklo pažymėjimą:",
+          options: {
+            a: "asmuo neprivalo pateikti;",
+            b: "asmuo turi teisę pateikti;",
+            c: "asmuo privalo pateikti policijos pareigūnui, jei policijos pareigūnas prisistato ir nurodo patikrinimo priežastį;",
+            d: "asmuo privalo pateikti.",
+          },
+          correct: "d",
+        },
+        {
+          q: "28. Pasibaigus leidimo nešiotis ar leidimo laikyti ginklą galiojimo terminui asmuo:",
+          options: {
+            a: "privalo kuo skubiau gauti medicininę pažymą ir kreiptis dėl leidimo perregistravimo;",
+            b: "privalo informuoti teritorinę policijos įstaigą, kad baigėsi leidimo galiojimas;",
+            c: "privalo informuoti teritorinę policijos įstaigą, kad pateiks dokumentus, reikalingus leidimo perregistravimui;",
+            d: "ginklą ir šaudmenis kartu su turimu ginklo pažymėjimu pristatyti laikinai saugoti į policijos įstaigą.",
+          },
+          correct: "d",
+        },
+        {
+          q: "29. Ginklo turėtojas, būdamas apsvaigęs nuo alkoholio (0.4 promilės ir daugiau) perduoti gabenti lydinčiam asmeniui:",
+          options: {
+            a: "turintis teisę naudotis tokios rūšies ginklu;",
+            b: "turinčiam teisę naudotis tokios kategorijos ginklu;",
+            c: "turinčiam leidimą ginklui;",
+            d: "turinčiam ginklą profesinei veiklai.",
+          },
+          correct: "b",
+        },
+        {
+          q: "30. Ar galima nešioti savigynos tikslais įsigytą ginklą matomoje vietoje?",
+          options: {
+            a: "negalimai;",
+            b: "galima, kai susiklosto aplinkybės;",
+            c: "galima tik ginklo dėkle;",
+            d: "galima, kai nešiojamas nedidelės nukaunamosios galios ginklas.",
+          },
+          correct: "a",
+        },
+        {
+          q: "31. Asmuo neprivalo:",
+          options: {
+            a: "sudaryti sąlygas kontroliuojančiųjų valstybės institucijų tarnautojams patekti į ginklų, šaudmenų laikymo vietas ir jų reikalavimu pateikti patikrinti ginklą, šaudmenis ir leidimą nešiotis ar leidimą laikyti ginklus, šaudmenis;",
+            b: "laikyti ginklus seife su įjungtu saugikliu;",
+            c: "užtikrinti reikiamą ginklų, šaudmenų apsaugą;",
+            d: "perdavęs parduoti ginklą, turimą ginklo pažymėjimą atiduoti subjektui, prekiaujančiam ginklais, per kurį parduodamas ginklas.",
+          },
+          correct: "b",
+        },
+        {
+          q: "32. Asmenys B kategorijos šaunamąjį ginklą ir šaudmenis turi laikyti:",
+          options: {
+            a: "gyvenamojoje patalpoje, metalinėje vidine spyna užrakinamoje dėžėje (seife), pritvirtintoje prie grindų taip, kad ja negalėtų pasinaudoti pašaliniai asmenys. Metalinės dėžės (seifo) sienelės turi būti ne plonesnės kaip 4 milimetrai;",
+            b: "gyvenamojoje vietoje ar kitoje su apskrities vyriausiuoju policijos komisariatu suderintoje vietoje prie pastato konstrukcijų nejudamai pritvirtintoje metalinėje vidine spyna užrakinamoje spintoje (seife) . Metalinės dėžės (seifo) sienelės turi būti ne plonesnės kaip 3 milimetrai;",
+            c: "patalpoje, metalinėje vidine spyna užrakinamoje dėžėje (seife), pritvirtintoje prie sienos ar grindų taip, kad ja negalėtų pasinaudoti pašaliniai asmenys. Metalinės dėžės (seifo) sienelės turi būti ne plonesnės kaip 2 milimetrai;",
+            d: "bet kurioje ginklo savininkui priklausančioje patalpoje, metalinėje vidine spyna užrakinamoje dėžėje (seife), pritvirtintoje prie sienos ar grindų taip, kad ja negalėtų pasinaudoti pašaliniai asmenys. Metalinės dėžės (seifo) sienelės turi būti ne plonesnės kaip 3 milimetrai.",
+          },
+          correct: "b",
+        },
+        {
+          q: "33. Patalpoje, kurioje laikomi ginklai, turi būti įrengta apsauginė įsilaužimo signalizacija, sudarytą iš bent vieno apsaugos ruožo:",
+          options: {
+            a: "kai laikoma daugiau kaip 12 B kategorijos ginklų;",
+            b: "kai laikomi A kategorijos ginklai;",
+            c: "kai laikoma daugiau kaip 12 ginklų;",
+            d: "kai laikoma daugiau nei 5, bet ne daugiau kaip 12 B kategorijos ginklų.",
+            e: "teisingi A ir B variantai.",
+          },
+          correct: "e",
+          notMix: "true",
+        },
+        {
+          q: "34. Lygiavamzdis šautuvas savigynai gabenamas (pernešamas, pervežamas į kitą ginklo laikymo vietą, šaudyklą ar pan.):",
+          options: {
+            a: "neužtaisytas, įdėtas į dėklą ar kitą tam skirtą daiktą, šoviniai negali būti sudėti į ginklo vamzdį ar dėtuvę;",
+            b: "neužtaisytas, įdėtas į dėklą , dėtuvė su šoviniais gali būti įdėta į ginklą;",
+            c: "įdėtas į dėklą, tamsiu paros metu šoviniai gali būti sudėti į ginklo vamzdį ar dėtuvę;",
+            d: "taip, kad kiti asmenys jo nematytų.",
+          },
+          correct: "a",
+        },
+        {
+          q: "35. Pneumatinis ginklas yra:",
+          options: {
+            a: "šaunamasis ginklas su vienu ar keliais vamzdžiais be šovinių dėtuvės, kurį prieš kiekvieną šūvį reikia užtaisyti ranka šovinį įdedant į šovinio lizdą ar į užtaisymo mechanizmą;",
+            b: "nešaunamasis ginklas, iš kurio paleidžiamos kulkos ar kitokio sviedinio kryptingas judėjimas atsiranda dėl suspausto oro ar kitų dujų jėgos;",
+            c: "šaunamasis ginklas, kuris po kiekvieno šūvio ranka atliekamu veiksmu užtaisomas šaunamuoju mechanizmu iš dėtuvės ar būgnelio;",
+            d: "nešaunamasis ginklas, kurio sviedinio energija neviršija 7,5 J.",
+          },
+          correct: "b",
+        },
+        {
+          q: "36. Leidimas nešiotis dujinį pistoletą (revolverį) galioja:",
+          options: {
+            a: "3 metus;",
+            b: "5 metus;",
+            c: "10 metų;",
+            d: "neterminuotai;",
+          },
+          correct: "d",
+        },
+        {
+          q: "37. Kada asmuo privalo perregistruoti leidimą laikyti (nešiotis) ginklus?",
+          options: {
+            a: "ne vėliau, kaip iki leidimo laikyti (nešiotis) ginklus galiojimo pabaigos;",
+            b: "ne anksčiau, kaip prieš 20 dienas ir ne vėliu kaip iki leidimo laikyti (nešiotis) ginklus galiojimo pabaigos;",
+            c: "ne anksčiau, kaip prieš 30 dienas ir ne vėliu kaip iki leidimo laikyti (nešiotis) ginklus galiojimo pabaigos;",
+            d: "ne anksčiau, kaip prieš 10 dienas ir ne vėliu kaip iki leidimo laikyti (nešiotis) ginklus galiojimo pabaigos.",
+          },
+          correct: "a",
+        },
+        {
+          q: "38. Kokias sąlygas gyvenamojoje vietoje ginklui laikyti privalo sudaryti fizinis asmuo, norintis įsigyti C kategorijos nedidelės nukaunamosios galios šaunamuosius ginklus.",
+          options: {
+            a: "metalinėje vidine spyna užrakinamoje dėžėje (seife), pritvirtintoje prie sienos ar grindų, seifo sienelės ne plonesnės, kaip 2mm;",
+            b: "metalinėje vidine spyna užrakinamoje dėžėje (seife), pritvirtintoje prie sienos ar grindų, seifo sienelės ne plonesnės, kaip 3mm;",
+            c: "turi būti saugomi taip, kad jais negalėtų pasinaudoti pašaliniai asmenys;",
+            d: "šis ginklas gali būti laikomas bet kurioje gyvenamojoje vietoje.",
+          },
+          correct: "c",
+        },
+        {
+          q: "39. B kategorijos ginklų, ginklų priedėlių, šaudmenų, jų dalių savininkas privalo:",
+          options: {
+            a: "pasibaigus leidimo nešiotis ginklus galiojimo terminui, ginklą pristatyti laikinai saugoti į policijos įstaigą;",
+            b: "pasibaigus leidimo nešiotis ginklus galiojimo terminui, pranešti policijos įstaigai;",
+            c: "pasibaigus leidimo nešiotis ginklus galiojimo terminui, ne vėliau kaip per 10 darbo dienų kreiptis į policijos įstaigą dėl leidimo nešiotis ginklus galiojimo termino pratęsimui;",
+            d: "pasibaigus leidimo nešiotis ginklus galiojimo terminui, ginklą ir šaudmenis kartu su turimu ginklo pažymėjimu pristatyti laikinai saugoti į policijos įstaigą.",
+          },
+          correct: "d",
+        },
+        {
+          q: "40. Leidimas laikyti (nešiotis) ginklus suteikia teisę?",
+          options: {
+            a: "suteikia teisę įsigyti leidime nurodytų ginklų;",
+            b: "nesuteikia teisės įsigyti leidime nurodytų ginklų.",
+          },
+          correct: "a",
+        },
+        {
+          q: "41. Nepriekaištingos reputacijos asmeniu nelaikomas asmuo?",
+          options: {
+            a: "kuris per pastaruosius 3 metus, ne mažiau kaip 2 kartus padarė administracinius nusižengimus, būdamas apsvaigęs nuo alkoholio, narkotinių, psichotropinių ar kitų psichiką veikiančių medžiagų;",
+            b: "kuris per pastaruosius 2 metus, ne mažiau kaip 2 kartus padarė administracinius nusižengimus, būdamas apsvaigęs nuo alkoholio, narkotinių, psichotropinių ar kitų psichiką veikiančių medžiagų;",
+            c: "kuris, būdamas apsvaigęs nuo alkoholio, narkotinių, psichotropinių ar kitų psichiką veikiančių medžiagų, per metus pakartotinai padarė teisės pažeidimą.",
+          },
+          correct: "c",
+        },
+        {
+          q: "42. Nešiojantis savigynai skirtą ginklą, būtina su savimi turėti šiuos dokumentus:",
+          options: {
+            a: "ginklo pažymėjimą ir asmens tapatybės dokumentą;",
+            b: "leidimą laikyti nešiotis ginklus ir asmens tapatybės dokumentą;",
+            c: "tik asmens tapatybės dokumentą;",
+            d: "leidimą laikyti nešiotis ginklus, ginklo pažymėjimą ir asmens tapatybės dokumentą.",
+          },
+          correct: "a",
+        },
+        {
+          q: "43. Fizinis asmuo, turintis neterminuotą leidimą laikyti (nešiotis) ginklus ir įsigijęs daugiau kaip 12 vnt. C kategorijoje nurodytų ginklų, privalo juos laikyti gyvenamoje patalpoje, kurioje?",
+          options: {
+            a: "įrengta apsaugos sistema;",
+            b: "įrengta apsauginė įsilaužimo signalizacija, sudaryta bent iš vieno apsaugos ruožo;",
+            c: "įrengta apsauginė įsilaužimo signalizacija, sudaryta iš pirmo ir iš antro apsaugos ruožo;",
+            d: "jie turi būti laikomi taip, kad jais negalėtų pasinaudoti pašaliniai asmenys.",
+          },
+          correct: "d",
+        },
+        {
+          q: "44. Pareiškėjas, dėl kurio priimtas sprendimas išduoti leidimą laikyti (nešiotis) ginklus savigynos tikslams, ne vėliau kaip per 5 mėnesius nuo pranešimo gavimo teritorinei policijos įstaigai tiesiogiai ar per PEPS turi pateikti?",
+          options: {
+            a: "egzamino išlaikymo pažymėjimą ir pažymą, patvirtinančią, kad yra tinkamos sąlygos ginklui laikyti;",
+            b: "egzamino išlaikymo pažymėjimą;",
+            c: "dokumentus, patvirtinančius asmens priklausymą šaudymo sporto organizacijai;",
+            d: "teisingi visi atsakymo variantai.",
+          },
+          correct: "a",
+        },
+        {
+          q: "45. Fizinis asmuo, jam priklausantį B ar C kategorijos ginklą gali perleisti nuolat naudoti?",
+          options: {
+            a: "tik šeimos nariui, turinčiam teisę laikyti ar nešiotis tos kategorijos ginklą, laikyti ir nešiotis ginklą jis galės tik nustatyta tvarka gavęs leidimą;",
+            b: "tik kartu gyvenančiam šeimos nariui, turinčiam teisę laikyti ar nešiotis tos kategorijos ginklą, laikyti ir nešiotis ginklą jis galės tik nustatyta tvarka gavęs leidimą;",
+            c: "tik kartu gyvenančiam asmeniui, turinčiam teisę laikyti ar nešiotis tos kategorijos ginklą, laikyti ir nešiotis ginklą jis galės tik nustatyta tvarka gavęs leidimą;",
+            d: "bet kuriam kitam asmeniui, turinčiam teisę laikyti ir nešiotis tos kategorijos ginklą.",
+          },
+          correct: "b",
+        },
+        {
+          q: "46. Sportui B ir C kategorijų ginklus, jų šaudmenis gali įsigyti LR nuolatiniai gyventojai – šaudymo sporto organizacijų nariai?",
+          options: {
+            a: "ne jaunesni kaip 18 metų;",
+            b: "ne jaunesni kaip 20 metų;",
+            c: "ne jaunesni kaip 16 metų;",
+            d: "ne jaunesni kaip 21 metų.",
+          },
+          correct: "a",
+        },
+        {
+          q: "47. Ar ginklui taisyti reikalingas leidimas?",
+          options: {
+            a: "reikalingas neterminuotas leidimas laikyti/nešiotis ginklus;",
+            b: "reikalingas leidimas remontuoti ginklus;",
+            c: "leidimo nereikia;",
+            d: "reikalingas leidimas laikyti/nešiotis ginklus.",
+          },
+          correct: "c",
+        },
+        {
+          q: "48. Ar galima ginklą palikti laikinoje laikymo vietoje, jei ginklo savininkas persikelia į nuolatinę gyvenamąją vietą?",
+          options: {
+            a: "draudžiama;",
+            b: "leidžiama;",
+            c: "galima, jei suderinta su policijos įstaigos pareigūnų.",
+          },
+          correct: "a",
+        },
+        {
+          q: "49. D kategorijos ginklo savininkui draudžiama ginklą ar šaudmenis perduoti naudoti be priežiūros asmenims, neturintiems?",
+          options: {
+            a: "18 metų;",
+            b: "16 metų;",
+            c: "14 metų;",
+            d: "21 metų.",
+          },
+          correct: "a",
+        },
+        {
+          q: "50. Savigynai B kategorijos ilguosius lygiavamzdžius ginklus, jų šovinius gali įsigyti ir turėti?",
+          options: {
+            a: "ne jaunesni kaip 21 metų nuolatiniai Lietuvos Respublikos gyventojai, išlaikę egzaminą ir gavę leidimą laikyti ginklus.",
+            b: "ne jaunesni kaip 23 metų nuolatiniai Lietuvos Respublikos gyventojai, išlaikę egzaminą ir gavę leidimą laikyti ginklus;",
+            c: "ne jaunesni kaip 21 metų Lietuvos Respublikos piliečiai, išlaikę egzaminą ir gavę leidimą laikyti ginklus;",
+            d: "ilgieji lygiavamzdžiai ginklai savigynai yra draudžiami.",
+          },
+          correct: "a",
+        },
+        {
+          q: "51. Kokį (-ius) D kategorijos ginklą (-us) galima nešiotis?",
+          options: {
+            a: "gynybinio pobūdžio elektros šoko įtaisus, dujų įrenginius;",
+            b: "šaltuosius ginklus, nepriskirtus draudžiamiesiems ginklams;",
+            c: "pneumatinius ginklus, kurių sviedinio kinetinė energija yra nuo 2,5 J iki 7,5 J.",
+            d: "senovinius ginklus.",
+          },
+          correct: "a",
+        },
+        {
+          q: "52. Fizinis asmuo, turintis ne daugiau kaip 5 ginklus, atitinkančius B kategoriją, ir jų šaudmenis, turi juos laikyti gyvenamoje patalpoje, kurioje?",
+          options: {
+            a: "įrengta apsaugos sistema;",
+            b: "įrengta apsauginė įsilaužimo signalizacija, sudaryta bent iš vieno apsaugos ruožo;",
+            c: "apsaugos sistemos ir/ar apsauginės įsilaužimo signalizacijos įrengti nebūtina;",
+            d: "įrengta apsauginė įsilaužimo signalizacija, sudaryta iš pirmo ir iš antro apsaugos ruožo.",
+          },
+          correct: "c",
+        },
+        {
+          q: "53. Lazerinius taikiklius gali įsigyti, turėti ir naudoti asmenys, turintys šaunamąjį ginklą?",
+          options: {
+            a: "asmenys, turintys šaunamąjį ginklą sportui ar šaulio tarnybai, medžioklei;",
+            b: "asmenys, turintys šaunamąjį ginklą savigynai;",
+            c: "asmenys, turintys šaunamąjį ginklą profesinei veiklai;",
+            d: "teisingi visi atsakymo variantai.",
+          },
+          correct: "a",
+        },
+        {
+          q: "54. Asmuo, pageidaujantis įsigyti trumpąjį šaunamąjį ginklą savigynos tikslams, teritorinei policijos įstaigai tiesiogiai arba per PEPS pateikia?",
+          options: {
+            a: "prašymą išduoti leidimą laikyti (nešiotis) ginklus;",
+            b: "medicininio patikrinimo išvadą (jei jos nėra informacinėje sistemoje);",
+            c: "asmens tapatybę patvirtinantį dokumentą (kai prašymas pateikiamas tiesiogiai);",
+            d: "teisingi visi atsakymų variantai.",
+          },
+          correct: "d",
+        },
+        {
+          q: "55. Ar medžioklei gali būti naudojami teisėtai turimi B kategorijos trumpieji šaunamieji ginklai?",
+          options: {
+            a: "gali būti naudojami;",
+            b: "negali būti naudojami;",
+            c: "negali būti naudojami, draudžia medžioklės įstatymas;",
+            d: "gali būti naudojami tik leidus medžioklės vadovui.",
+          },
+          correct: "a",
+        },
+        {
+          q: "56. Savigynai C kategorijos ginklus turi teisę įsigyti:",
+          options: {
+            a: "ne jaunesni kaip 18 metų nuolatiniai Lietuvos Respublikos gyventojai, gavę leidimą;",
+            b: "ne jaunesni kaip 21 metų nuolatiniai Lietuvos Respublikos gyventojai, išlaikę egzaminą ir gavę leidimą;",
+            c: "ne jaunesni kaip 21 metų asmenys;",
+            d: "ne jaunesni kaip 21 metų nuolatiniai Lietuvos Respublikos gyventojai, gavę leidimą;",
+            e: "tokios kategorijos ginklams leidimas nereikalingas.",
+          },
+          correct: "d",
+        },
+        {
+          q: "57. Ne daugiau kaip 5 B kategorijos ginklai laikomi:",
+          options: {
+            a: "gyvenamojoje prie pastato konstrukcijų nejudamai (rekomenduojama taip, kad, atsižvelgiant į pastato konstrukciją, metalinės spintos (seifo) demontavimas būtų neįmanomas jos neatidarius) pritvirtintoje metalinėje spintoje (seife), kuri atitinka Europos Sąjungoje seifams ir saugyklų durims galiojantį standartą EN 1143-1 ar standarto EN-14450 S1 arba S2 klasės metalinėms spintoms keliamus reikalavimus, arba kurios sienelės turi būti ne plonesnės kaip 3 mm ir kuri užrakinta vidine raktine arba kodine spyna, įtvirtinta metalinės spintos (seifo) viduje taip, kad būtų apsaugota nuo mechaninio poveikio iš išorės (išorinėje metalinės spintos (seifo) durelių pusėje yra tik anga raktui į spyną įkišti);",
+            b: "B kategorijos ginklai, ginklų priedėliai, šaudmenys, jų dalys turi būti laikomi taip, kad jais negalėtų pasinaudoti pašaliniai asmenys.",
+            c: "gyvenamojoje vietoje ir (ar) kitoje su policijos įstaiga suderintoje vietoje prie pastato konstrukcijų nejudamai (rekomenduojama taip, kad, atsižvelgiant į pastato konstrukciją, metalinės spintos (seifo) demontavimas būtų neįmanomas jos neatidarius) pritvirtintoje metalinėje spintoje (seife), kuri atitinka Europos Sąjungoje seifams ir saugyklų durims galiojantį standartą EN 1143-1 ar standarto EN-14450 S1 arba S2 klasės metalinėms spintoms keliamus reikalavimus, arba kurios sienelės turi būti ne plonesnės kaip 3 mm ir kuri užrakinta vidine raktine arba kodine spyna, įtvirtinta metalinės spintos (seifo) viduje taip, kad būtų apsaugota nuo mechaninio poveikio iš išorės (išorinėje metalinės spintos (seifo) durelių pusėje yra tik anga raktui į spyną įkišti);",
+            d: "gyvenamojoje patalpoje, metalinėje vidine spyna užrakintoje dėžėje (seife), pritvirtintoje prie sienų ar grindų taip, kad ja negalėtų pasinaudoti pašaliniai asmenys. Metalinės dėžės (seifo) sienelės turi būti ne plonesnės kaip 3 milimetrai.",
+          },
+          correct: "c",
+        },
+        {
+          q: "58. Asmuo, turintis leidimą nešiotis ginklus savigynai, gali įsigyti ir turėti:",
+          options: {
+            a: "šaudmenų tik tam ginklui, kuris nurodytas ginklo pažymėjime ir juos nešiotis ar laikyti;",
+            b: "neribojamą skaičių visų rūšių šaudmenų;",
+            c: "iki 5 kg. parako;",
+            d: "elektrošoko įtaisą su iššaunamosiomis adatomis, lanksčiais laidais sujungtomis su aukštos įtampos elektros energijos šaltiniu.",
+          },
+          correct: "a",
+        },
+        {
+          q: "59. Ar leidžiama profesinėje veikloje naudoti asmeninį šaunamąjį ginklą?",
+          options: {
+            a: "leidžiama, jei šaunamasis ginklas dujinis pistoletas;",
+            b: "draudžiama;",
+            c: "leidžiama;",
+            d: "draudžiama, išskyrus atvejus, kai to reikalauja vadovybė.",
+          },
+          correct: "b",
+        },
+        {
+          q: "60. Draudžiama panaudoti šaunamąjį ginklą:",
+          options: {
+            a: "prieš gyvūną, keliantį pavojų gyvybei ar sveikatai;",
+            b: "žmonių susibūrimo vietose, jeigu nuo to gali nukentėti pašaliniai asmenys;",
+            c: "pagalbai pasikviesti ar perspėti;",
+            d: "prieš nepilnamečius, kurių užpuolimas kelia grėsmę gyvybei.",
+          },
+          correct: "b",
+        },
+        {
+          q: "61. Šaunamąjį ginklą savigynai būtinosios ginties, būtinojo reikalingumo atvejais, siekiant sulaikyti administracinį nusižengimą padariusį asmenį:",
+          options: {
+            a: "panaudoti galima;",
+            b: "panaudoti negalima.",
+          },
+          correct: "b",
+        },
+        {
+          q: "62. Asmuo, panaudojęs šaunamąjį ginklą privalo atlikti (eiliškumas):",
+          options: {
+            a: "pranešti artimiausiam policijos komisariatui ar prokuratūrai, stengtis išsaugoti nepaliestą įvykio vietą, suteikti pirmąją medicinos pagalbą;",
+            b: "suteikti pirmąją medicinos pagalbą, pranešti policijos komisariatui ar prokuratūrai, stengtis išsaugoti nepaliestą įvykio vietą, užrašyti liudytojų duomenis (jei tokie yra);",
+            c: "užrašyti liudytojų duomenis (jei tokie yra), pranešti artimiausiam policijos komisariatui ar prokuratūrai, suteikti pirmąją medicinos pagalbą;",
+            d: "iškviesti medicinos pagalbą, nustatyti sužeistojo asmenybę ir informuoti teritorinę policijos įstaigą ar prokuratūrą.",
+          },
+          correct: "b",
+        },
+        {
+          q: "63. Šaunamojo ginklo panaudojimo tvarka (eiliškumas):",
+          options: {
+            a: "paleidus įspėjamąjį šūvį ir perspėjus balsu (jeigu yra galimybė);",
+            b: "perspėjus balsu ir paleidus įspėjamąjį šūvį;",
+            c: "paleidus mažiausiai 2 įspėjamuosius šūvius ir perspėjus balsu (jeigu yra tokia galimybė);",
+            d: "demonstratyviai užtaisius ginklą ir paleidus įspėjamąjį šūvį.",
+          },
+          correct: "b",
+        },
+        {
+          q: "64. Leidžiama panaudoti šaunamąjį ginklą:",
+          options: {
+            a: "žmonių susibūrimo vietose, jeigu nuo to gali nukentėti pašaliniai asmenys;",
+            b: "prieš moteris, jei akivaizdu, kad jos nėščios, taip pat prieš asmenis, jei akivaizdu, kad jie neįgalūs, prieš nepilnamečius, jeigu jų amžius žinomas arba išvaizda atitinka amžių;",
+            c: "prieš moteris, jei akivaizdu, kad jos nėščios, taip pat prieš asmenis, jei akivaizdu, kad jie neįgalūs, prieš nepilnamečius, jeigu jų amžius žinomas arba išvaizda atitinka amžių, kai jie priešinasi pavojingu žmogaus gyvybei ar sveikatai būdu arba kai užpuola ir šis užpuolimas kelia grėsmę žmogaus gyvybei ar sveikatai;",
+            d: "prieš moteris, jei akivaizdu, kad jos nėščios, taip pat prieš asmenis, jei akivaizdu, kad jie neįgalūs, prieš nepilnamečius, jeigu jų amžius žinomas arba išvaizda atitinka amžių, kai šie asmenys užpuola ir šis užpuolimas kelia grėsmę žmogaus sveikatai.",
+          },
+          correct: "c",
+        },
+        {
+          q: "65. Sąvokos „būtinoji gintis“, „būtinasis reikalingumas“ ir „asmens padariusio nusikalstamą veiką sulaikymas“ apibūdina:",
+          options: {
+            a: "atvejus, kai galima panaudoti bet kokią prievartą;",
+            b: "atvejus, kada draudžiama panaudoti šaunamąjį ginklą;",
+            c: "kai kurias baudžiamąją atsakomybę šalinančias aplinkybes;",
+            d: "baudžiamąją atsakomybę šalinančias aplinkybes už šaunamojo ginklo panaudojimą.",
+          },
+          correct: "c",
+        },
+        {
+          q: "66. Kada asmuo turi teisę į būtinąją gintį?",
+          options: {
+            a: "asmuo turi teisę į būtinąją gintį jei negali išvengti kėsinimosi. Šią teisę jis gali įgyvendinti jei kiti asmenis ar valdžios institucijos negali padėti;",
+            b: "asmuo turi teisę į būtinąją gintį. Šią teisę jis gali įgyvendinti neatsižvelgdamas į tai, ar galėjo išvengti kėsinimosi arba kreiptis pagalbos į kitus asmenis ar valdžios institucijas;",
+            c: "asmuo turi teisę į būtinąją gintį. Šią teisę jis gali įgyvendinti jei negalėjo išvengti kėsinimosi arba kreipėsi pagalbos į kitus asmenis ar valdžios institucijas ir nesulaukė tinkamos pagalbos.",
+          },
+          correct: "b",
+        },
+        {
+          q: "67. Kas yra būtinosios ginties ribų peržengimas:",
+          options: {
+            a: "būtinosios ginties ribų peržengimas yra tuo atveju, kai tiesiogine tyčia nužudoma arba sunkiai sutrikdoma sveikata, jeigu gynyba atitiko kėsinimosi pobūdį ir pavojingumą. Būtinosios ginties ribų peržengimu laikoma kai dėl didelio sumišimo ir išgąsčio, kurį sukėlė pavojingas kėsinimasis, arba ginantis nuo įsibrovimo į būstą padaryta veika;",
+            b: "būtinosios ginties ribų peržengimas yra tuo atveju, kai tiesiogine netyčia nužudoma arba nesunkiai sutrikdoma sveikata, jeigu gynyba aiškiai neatitiko kėsinimosi pobūdžio ir pavojingumo. Būtinosios ginties ribų peržengimu laikoma dėl didelio sumišimo ar išgąsčio, kurį sukėlė pavojingas kėsinimasis, arba ginantis nuo įsibrovimo į būstą padaryta veika;",
+            c: "būtinosios ginties ribų peržengimas yra tuo atveju, kai tiesiogine tyčia nužudoma arba sunkiai sutrikdoma sveikata, jeigu gynyba aiškiai neatitiko kėsinimosi pobūdžio ir pavojingumo. Būtinosios ginties ribų peržengimu nelaikoma dėl didelio sumišimo ar išgąsčio, kurį sukėlė pavojingas kėsinimasis, arba ginantis nuo įsibrovimo į būstą padaryta veika.",
+          },
+          correct: "c",
+        },
+        {
+          q: "68. Būtinoji gintis:",
+          options: {
+            a: "nėra nusikaltimas toks veikimas, kuris nors ir formaliai atitinka Baudžiamajame įstatyme numatytos veikos požymius, tačiau padarytas esant būtinajai ginčiai, t.y. ginant save, kitą asmenį, savo būsto neliečiamybę, kitas teises, visuomenės ar valstybės interesus nuo pradėto ar tiesiogiai gresiančio pavojingo kėsinimosi, jei tuo nebuvo peržengtos būtinosios ginties ribos;",
+            b: "nėra nusikaltimas toks veikimas, kuris nors ir formaliai atitinka Baudžiamajame įstatyme numatytos veikos požymius, tačiau padarytas esant būtinajai ginčiai, t.y. ginant save, kitą asmenį, nuosavybę, savo būsto neliečiamybę ir kitas teises, visuomenės ar valstybės interesus nuo pasibaigusio nepavojingo kėsinimosi;",
+            c: "nėra nusikaltimas toks veikimas, kuris nors ir formaliai atitinka Baudžiamajame įstatyme numatytos veikos požymius, tačiau padarytas esant būtinajai ginčiai, t.y. ginant save, savo būsto neliečiamybę, savo teises nuo pradėto ar tiesiogiai gresiančio pavojingo kėsinimosi, jei tuo nebuvo peržengtos būtinosios ginties ribos.",
+          },
+          correct: "a",
+        },
+        {
+          q: "69. Būtinosios ginties sąlygos:",
+          options: {
+            a: "pavojingumas, realumas ir būtinasis reikalingumas;",
+            b: "pavojingumas, akivaizdumas ir būtinasis reikalingumas;",
+            c: "pavojingumas, realumas ir akivaizdumas;",
+            d: "pavojingumas, akivaizdumas ir būtinosios ginties ribų neperžengimo principas.",
+          },
+          correct: "c",
+        },
+        {
+          q: "70. Būtinosios ginties nuostatomis galima pasiremti ginantis:",
+          options: {
+            a: "nuo pavojingų asmenų;",
+            b: "nuo pavojingo kėsinimosi;",
+            c: "nuo administracinio nusižengimo;",
+            d: "teisingi a ir b atsakymai.",
+          },
+          correct: "b",
+          notMix: "true",
+        },
+        {
+          q: "71. Asmuo neatsako pagal baudžiamuosius įstatymus:",
+          options: {
+            a: "už veiką, kurią jis padarė siekdamas pašalinti jam pačiam, kitiems asmenims ar jų teisėms, visuomenės ar valstybės interesams gresiantį pavojų, jeigu šis pavojus negalėjo būti pašalintas kitomis priemonėmis ir padaryta žala yra lygi tai, kurios siekta išvengti;",
+            b: "už veiką, kurią jis padarė siekdamas pašalinti jam pačiam, kitiems asmenims ar jų teisėms, visuomenės ar valstybės interesams gresiantį pavojų, jeigu šis pavojus negalėjo būti pašalintas kitomis priemonėmis ir padaryta žala yra mažesnė už tą, kurios siekta išvengti;",
+            c: "už veiką, kurią jis padarė siekdamas pašalinti jam pačiam, kitiems asmenims ar jų teisėms, visuomenės ar valstybės interesams gresiantį pavojų, jeigu šis pavojus galėjo būti pašalintas kitomis priemonėmis ir padaryta žala yra ne mažesnė už tą, kurios siekta išvengti.",
+          },
+          correct: "b",
+        },
+        {
+          q: "72. Būtinasis reikalingumas:",
+          options: {
+            a: "asmuo neatsako pagal baudžiamuosius įstatymus už veiką, kurią jis padarė siekdamas pašalinti jam pačiam, kitiems asmenims ar jų teisėms, visuomenės ar valstybės interesams gresiantį pavojų, jeigu šis pavojus negalėjo būti pašalintas kitomis priemonėmis ir padaryta žala yra didesnė už tą, kurios siekta išvengti;",
+            b: "asmuo neatsako pagal baudžiamuosius įstatymus už veiką, kurią jis padarė siekdamas pašalinti jam pačiam, kitiems asmenims ar jų teisėms, visuomenės ar valstybės interesams gresiantį pavojų, jeigu šis pavojus negalėjo būti pašalintas kitomis priemonėmis ir padaryta žala yra mažesnė už tą, kurios siekta išvengti;",
+            c: "asmuo neatsako pagal baudžiamuosius įstatymus už veiką, kurią jis padarė siekdamas pašalinti jam pačiam, kitiems asmenims ar jų teisėms, visuomenės ar valstybės interesams gresiantį pavojų, jeigu šis pavojus galėjo būti pašalintas kitomis priemonėmis.",
+          },
+          correct: "b",
+        },
+        {
+          q: "73. Kada galima pasiremti būtinojo reikalingumo nuostatomis?",
+          options: {
+            a: "asmuo, savo veiksmais sudaręs pavojingą situaciją, negali pasiremti būtinojo reikalingumo nuostatomis tuo atveju, jeigu pavojinga situacija sudaryta dėl neatsargumo;",
+            b: "asmuo, savo veiksmais sudaręs pavojingą situaciją, gali pasiremti būtinojo reikalingumo nuostatomis tik tuo atveju, jeigu pavojinga situacija sudaryta dėl neatsargumo;",
+            c: "asmuo, savo veiksmais sudaręs pavojingą situaciją, gali pasiremti būtinojo reikalingumo nuostatomis tik tuo atveju, jeigu situacija sudaryta tyčia.",
+          },
+          correct: "b",
+        },
+        {
+          q: "74. Dujų įrenginiai įsigyjami?",
+          options: {
+            a: "nuo 18 metų, jais prekiaujančiai įmonei pateikę asmens tapatybės dokumentą;",
+            b: "nuo 20 metų, jais prekiaujančiai įmonei pateikę asmens tapatybės dokumentą;",
+            c: "nuo 18 metų, jais prekiaujančiai įmonei pateikę neterminuotą leidimą laikyti (nešiotis) ginklus;",
+            d: "nuo 23 metų, jais prekiaujančiai įmonei pateikę neterminuotą leidimą laikyti (nešiotis) ginklus.",
+          },
+          correct: "a",
+        },
+        {
+          q: "75. Asmuo savigynai turimą ginklą gali panaudoti?",
+          options: {
+            a: "žmonių susibūrimo vietose, jei nuo to gali nukentėti pašaliniai asmenys;",
+            b: "prieš nusikalstamą veiką padariusį asmenį, kuris vengia sulaikymo.",
+            c: "norėdamas pasikviesti pagalbą ar perspėti;",
+            d: "prieš asmenis, jei jie akivaizdžiai neblaivūs.",
+          },
+          correct: "c",
+        },
+        {
+          q: "76. Būtinojo reikalingumo teisėtumo sąlygos?",
+          options: {
+            a: "pavojaus gresia įstatymo saugomiems interesams;",
+            b: "pavojaus akivaizdumas;",
+            c: "padarytoji žala turi būti mažiau reikšminga už tą, kuri grėsė;",
+            d: "teisingi visi atsakymų variantai.",
+          },
+          correct: "d",
+        },
+        {
+          q: "77. Šaunamojo ginklo panaudojimo tvarka (eiliškumas)?",
+          options: {
+            a: "atliktį įspėjamąjį šūvį ir perspėjus balsu (jeigu yra galimybė);",
+            b: "prieš panaudojant ginklą, būtina įspėti asmenį, prieš kurį jis bus panaudotas. Ši nuostata netaikoma, kai įspėti dėl susidariusios situacijos neįmanoma arba kai delsimas kelia tiesioginį pavojų ginklo naudotojui ar kito asmens gyvybei ar sveikatai;",
+            c: "atlikti mažiausiai 2 įspėjamuosius šūvius ir perspėjus balsu (jeigu yra tokia galimybė).",
+          },
+          correct: "b",
+        },
+        {
+          q: "78. Baudžiamoji atsakomybė už             šaunamojo ginklo, šaudmenų, sprogmenų ar sprogstamųjų medžiagų laikymo taisyklių pažeidimą bus, jei:",
+          options: {
+            a: "asmuo pažeidė turimo šaunamojo ginklo, šaudmenų, sprogmenų ar sprogstamųjų medžiagų laikymo taisykles ir dėl to atsirado sąlygos kitam asmeniui teisėtai jais pasinaudoti;",
+            b: "asmuo pažeidė teisėtai turimo šaunamojo ginklo, šaudmenų, sprogmenų ar sprogstamųjų medžiagų laikymo taisykles ir dėl to sudarė sąlygas kitam asmeniui neteisėtai jais pasinaudoti. Tai taikoma tik tais atvejais, kai numatytos veikos padarytos dėl neatsargumo;",
+            c: "asmuo pažeidė teisėtai turimo šaunamojo ginklo, šaudmenų, sprogmenų ar sprogstamųjų medžiagų laikymo taisykles ir dėl to sudarė sąlygas kitam asmeniui teisėtai jais pasinaudoti. Tai taikoma tik tais atvejais, kai numatytos veikos padarytos dėl neatsargumo;",
+            d: "asmuo pažeidė turimo šaunamojo ginklo, šaudmenų, sprogmenų ar sprogstamųjų medžiagų laikymo taisykles ir dėl to sudarė sąlygas kitam asmeniui neteisėtai jais pasinaudoti. Tai taikoma tik tais atvejais, kai numatytos veikos padarytos tyčia.",
+          },
+          correct: "b",
+        },
+        {
+          q: "79. Kokia atsakomybė numatyta už šaunamojo ginklo, šaudmenų laikymo taisyklių pažeidimą, sudariusį sąlygas kitam asmeniui juos neteisėtai panaudoti:",
+          options: {
+            a: "civilinė;",
+            b: "administracinė;",
+            c: "baudžiamoji;",
+            d: "drausminė.",
+          },
+          correct: "c",
+        },
+        {
+          q: "80. Lietuvos Respublikos administracinių nusižengimų kodekse nėra numatyta administracinė atsakomybė:",
+          options: {
+            a: "už teisėtai įgyto ginklo, šaudmenų, kuriems įsigyti, laikyti ar nešioti reikalingas leidimas, saugojimo, laikymo, nešiojimo ar gabenimo taisyklių pažeidimus;",
+            b: "už ginklo, šaudmenų, kuriems įsigyti ir laikyti ar nešioti nereikalingas leidimas, saugojimo, laikymo, nešiojimo ar gabenimo taisyklių pažeidimus;",
+            c: "už teisėtai turimo šaunamojo ginklo, šaudmenų, laikymo taisyklių pažeidimą jei dėl to buvo sudarytos sąlygos kitam asmeniui neteisėtai jais pasinaudoti.",
+          },
+          correct: "c",
+        },
+        {
+          q: "81. Lietuvos Respublikos administracinių nusižengimų kodekse yra numatyta administracinė atsakomybė:",
+          options: {
+            a: "už ginklo, šaudmenų nešiojimą, gabenimą, kai tai daro neblaivus asmuo, kuriam nustatomas lengvas neblaivumo (girtumo) laipsnis (nuo 0,41 promilės ir daugiau);",
+            b: "už ginklo, šaudmenų nešiojimą, gabenimą, kai tai daro neblaivus asmuo, kuriam nustatomas lengvas neblaivumo (girtumo) laipsnis (nuo 0,39 promilės iki l ,5 promilės);",
+            c: "už ginklo, šaudmenų nešiojimą gabenimą, kai tai daro neblaivus asmuo, kuriam nustatomas lengvas neblaivumo (girtumo) laipsnis (nuo 0,0 promilės iki 1.5 promilės).",
+          },
+          correct: "a",
+        },
+        {
+          q: "82. Už ką administracinių nusižengimų kodekse nenumatyta atsakomybė?",
+          options: {
+            a: "už neteisėtai įgytą šaunamąjį ginklą;",
+            b: "už ginklo, šaudmenų, kuriems įsigyti, laikyti ar nešioti nereikalingas leidimas, saugojimo, laikymo, nešiojimo ar gabenimo taisyklių pažeidimus;",
+            c: "už neteisėtą šaudymą iš ginklo;",
+            d: "b ir c atsakymai.",
+          },
+          correct: "a",
+        },
+        {
+          q: "83. Dujinio pistoleto įsigijimas, laikymas be policijos leidimo užtraukia atsakomybę:",
+          options: {
+            a: "civilinę;",
+            b: "administracinę;",
+            c: "drausminę;",
+            d: "baudžiamąją.",
+          },
+          correct: "d",
+        },
+        {
+          q: "84. Už leidimo laikyti ginklus neperregistravimą:",
+          options: {
+            a: "konfiskuojamas ginklas;",
+            b: "kyla administracinė atsakomybė;",
+            c: "kyla baudžiamoji atsakomybė;",
+            d: "teisingi a ir b atsakymai.",
+          },
+          correct: "b",
+          notMix: "true",
+        },
+        {
+          q: "85. Kokia atsakomybė bus taikoma asmeniui, kuris savo ginklą davė ardyti asmeniui, neturinčiam teisės turėti ginklus mokymų metu:",
+          options: {
+            a: "jokia;",
+            b: "administracinė;",
+            c: "baudžiamoji;",
+            d: "civilinė.",
+          },
+          correct: "a",
+        },
+        {
+          q: "86. Ar gali būti panaikinamas leidimas, jeigu nustatoma, kad asmuo neteisėtai įgyja, laiko ar nešioja didelės talpos (daugiau kaip 20 šovinių, jeigu dėtuvė skirta trumpajam šaunamajam ginklui, arba daugiau kaip 10 šovinių, jeigu dėtuvė skirta ilgajam šaunamajam ginklui) dėtuvę?",
+          options: {
+            a: "taip;",
+            b: "ne;",
+            c: "leidimas nepanaikinamas, tačiau skiriama administracinė nuobauda;",
+            d: "leidimas nepanaikinamas, tačiau skiriama baudžiamoji atsakomybė.",
+          },
+          correct: "a",
+        },
+        {
+          q: "87. Ginklas yra:",
+          options: {
+            a: "šaunamasis ginklas, kuris po kiekvieno šūvio užsitaiso automatiškai ir kuriuo, vieną kartą nuspaudus nuleistuką, galima iššauti daugiau kaip vieną kartą;",
+            b: "nešaunamasis ginklas, iš kurio gali būti paleistos kenksmingosios, dirginančiosios medžiagos ar jų užtaisas. Dujiniai pistoletai (revolveriai) priskiriami šaunamiesiems ginklams;",
+            c: "įrenginys ar daiktas, sukonstruotas ar pritaikytas taikiniams naikinti, žaloti ar kitaip jiems paveikti;",
+            d: "šaltasis, nešaunamasis ar šaunamasis ginklas.",
+          },
+          correct: "c",
+        },
+        {
+          q: "88. Pertaisomas ginklas yra:",
+          options: {
+            a: "ginklas su vienu ar keliais vamzdžiais be šovinių dėtuvės, kurį prieš kiekvieną šūvį reikia pertaisysi ranka šovinį įdedant į šovinio lizdą ar į užtaisymo mechanizmą;",
+            b: "nešaunamasis ginklas, iš kurio paleidžiamos kulkos ar kitokio sviedinio kryptingas judėjimas atsiranda dėl suspausto oro ar kitų dujų jėgos;",
+            c: "šaunamasis ginklas, kuris po kiekvieno šūvio rankos veiksmu užtaisomas šaunamuoju mechanizmu iš dėtuvės ar būgnelio;",
+            d: "ginklas, kurio užraktą reikia pertraukti prieš kiekvieną šūvį.",
+          },
+          correct: "c",
+        },
+        {
+          q: "89. Visiškai netinkamas naudoti ginklas yra:",
+          options: {
+            a: "nešaunamasis ginklas, kurio sviediniui, naudojantis raumenų jėga ar mechaniniais įrenginiais, energiją suteikia tamprus elementas;",
+            b: "nešaunamasis ginklas, kuriuo, naudojantis raumenų jėga, per atstumą arba esant tiesioginiam sąlyčiui galima sunaikinti ar kitaip mechaniškai paveikti taikinį (durti, pjauti, kirsti, smogti, triuškinti). Šaltaisiais ginklais nelaikomi ūkinės ar buitinės paskirties įrankiai;",
+            c: "nešaunamasis ginklas, kuris gaunamas perdirbant ar paveikiant šaunamąjį ginklą arba pakeičiant šaunamojo ginklo savybes taip, kad visos jo pagrindinės dalys yra negrįžtamai sugadintos ar sugedusios ir jų neįmanoma atkurti, sutaisyti, išimti, pakeisti kitomis, kad jis vėl taptų tinkamas naudoti pagal paskirtį;",
+            d: "svorinis–gabaritinis maketas, pagamintas pagal konkretaus ginklo pavyzdį.",
+          },
+          correct: "c",
+        },
+        {
+          q: "90. Vienašūvis šaunamasis ginklas yra:",
+          options: {
+            a: "šaunamasis ginklas su vienu ar keliais vamzdžiais be šovinių dėtuvės, kurį prieš kiekvieną šūvį reikia užtaisyti ranka šovinį įdedant į šovinio lizdą ar į užtaisymo mechanizmą;",
+            b: "šaunamasis ginklas, kurį po vieno šūvio reikia užtaisyti ranka šovinį įdedant į šovinio lizdą ar į užtaisymo mechanizmą;",
+            c: "nešaunamasis ginklas, iš kurio paleidžiamos kulkos ar kitokio sviedinio kryptingas judėjimas atsiranda dėl suspausto oro ar kitų dujų jėgos;",
+            d: "šaunamasis ginklas, kurį po kiekvieno šūvio reikia užtaisyti ranka.",
+          },
+          correct: "a",
+        },
+        {
+          q: "91. Dujinis ginklas yra:",
+          options: {
+            a: "įrenginys ar daiktas, sukonstruotas ar pritaikytas gyviesiems ar kitiems objektams, taikiniams naikinti, žaloti ar kitaip juos paveikti dujomis;",
+            b: "nešaunamasis ginklas, kurio sviediniui, naudojantis raumenų jėga ar mechaniniais įrenginiais, energiją suteikia tamprus elementas;",
+            c: "šaunamasis ginklas, sukonstruotas ar pritaikytas šaudyti tik kenksmingosiomis, dirginamosiomis ar kitomis dujinėmis veikliosiomis medžiagomis, jų užtaisais ar imitaciniais šaudmenimis;",
+            d: "įrenginys ar daiktas iš kurio gali būti paleistos ašarinės, pipirinės ar kitos dujos. civilinėje apyvartoje draudžiami dujiniai ginklai su nuodingosiomis medžiagomis.",
+          },
+          correct: "c",
+        },
+        {
+          q: "92. Šaunamojo ginklo dalis yra:",
+          options: {
+            a: "šaunamojo ginklo sudėtinis elementas, būtinas tam, kad šaunamasis ginklas veiktų, įskaitant pistoleto (revolverio) rėmą, jo ir pagrindinių šaunamojo ginklo dalių pusgaminius;",
+            b: "vamzdis, būgnelis, spyna (užraktas), šovinio lizdas (kai jis yra atskira dalis) ir į šaunamojo ginklo vamzdį įdedamas įdėklas (mažesnio kalibro vamzdis);",
+            c: "bet kuri šaunamojo ginklo dalis, būtina tam, kad šaunamasis ginklas veiktų, įskaitant kryptuką, nuleistuką, skiltuvą, grąžinamąją spyruoklę ir vamzdį;",
+            d: "bet kuri šaunamojo ginklo dalis numatyta ginklo gamintojo konkrečiame modelyje.",
+          },
+          correct: "a",
+        },
+        {
+          q: "93. Senovinis ginklas yra:",
+          options: {
+            a: "šaunamasis ginklas, kurio modelis sukurtas iki 1970 metų;",
+            b: "šaunamasis ginklas, kurio modelis sukurtas iki 1870 metų;",
+            c: "šaunamasis ginklas, kurio modelis sukurtas iki 1920 metų;",
+            d: "šaunamasis ginklas užtaisomas per vamzdį.",
+          },
+          correct: "b",
+        },
+        {
+          q: "94. Dujiniai pistoletai (revolveriai) priskiriami:",
+          options: {
+            a: "nešaunamiesiems ginklams;",
+            b: "šaunamiesiems ginklams;",
+            c: "aerozoliniams įrenginiams;",
+            d: "pneumatiniams ginklams.",
+          },
+          correct: "b",
+        },
+        {
+          q: "95. Ekspansyvioji kulka:",
+          options: {
+            a: "kulka su išcentruotu svorio centru, kuri skverbdamasi į kliūtį staiga verčiasi;",
+            b: "kulka su išbalansuotu svoriu, kuri pataikiusi į kliūtį staiga keičia kryptį;",
+            c: "kulka su sustiprintu apvalkalu, kuri skverbdamasi į kliūtį minimaliai deformuojasi;",
+            d: "kulka su susilpnintu smaigaliu, kuri skverbdamasi į kliūtį staiga deformuojasi.",
+          },
+          correct: "d",
+        },
+        {
+          q: "96. Ginklo priedėliai:",
+          options: {
+            a: "duslintuvas, kompensatorius, lazerinis, optinis ir naktinis taikikliai;",
+            b: "duslintuvas ir naktinis taikiklis;",
+            c: "lazerinis, optinis ir naktinis taikikliai;",
+            d: "duslintuvas, kompensatorius, optinis ir naktinis taikikliai.",
+          },
+          correct: "a",
+        },
+        {
+          q: "97. Pusiau automatinis šaunamasis ginklas yra:",
+          options: {
+            a: "šaunamasis ginklas, kuris po kiekvieno šūvio užsitaiso automatiškai, tačiau vienu nuleistuko paspaudimu galima iššauti daugiau kaip vieną kartą;",
+            b: "šaunamasis ginklas, kuris po kiekvieno šūvio užsitaiso automatiškai, tačiau vienu nuleistuko paspaudimu negalima iššauti daugiau kaip vieną kartą;",
+            c: "pistoletas, revolveris, automatiškai persitaisantis šautuvas;",
+            d: "šaunamasis ginklas, kuris po kiekvieno šūvio užsitaiso automatiškai, o vienu nuleistuko paspaudimu galima iššauti daugiau kaip vieną kartą arba ne daugiau kaip vieną kartą, jei nustatyta pusiau automatinio šaudymo funkcija.",
+          },
+          correct: "b",
+        },
+        {
+          q: "98. Šovinys susideda iš:",
+          options: {
+            a: "tūtos ar tūtelės su kapsule, sviedžiamojo užtaiso, sviedinio;",
+            b: "tūtos ar tūtelės su kapsule, sviedžiamojo užtaiso, kulkos;",
+            c: "tūtelės, kapsulės, parako, kulkos arba šratų;",
+            d: "tūtelės, kapsulės, parako ir kulkos, šratų, artilerijos sviedinio ar kt.",
+          },
+          correct: "a",
+        },
+        {
+          q: "99. Trumpasis šaunamasis ginklas:",
+          options: {
+            a: "šaunamasis ginklas, kurio vamzdis ne ilgesnis kaip 20 cm arba kurio visas ilgis neviršija 30 cm;",
+            b: "šaunamasis ginklas, kurio visas ilgis neviršija 20 cm;",
+            c: "šaunamasis ginklas, kurio vamzdis ne ilgesnis kaip 30 cm arba kurio visas ilgis neviršija 60 cm;",
+            d: "pistoletas ir revolveris.",
+          },
+          correct: "c",
+        },
+        {
+          q: "100. Ilgasis šaunamasis ginklas:",
+          options: {
+            a: "lygiavamzdis ar graižtvinis šautuvas;",
+            b: "šaunamasis ginklas, kurio visas ilgis viršija 55 cm;",
+            c: "šaunamasis ginklas, kurio vamzdis ilgesnis kaip 28 cm;",
+            d: "bet kuris kitas šaunamasis ginklas, išskyrus trumpąjį šaunamąjį ginklą.",
+          },
+          correct: "d",
+        },
+        {
+          q: "101. Lietuvos Respublikoje ginklai pagal jų pavojingumo laipsnį skirstomi į:",
+          options: {
+            a: "kovinius, tarnybinius, civilinius ir vardinius;",
+            b: "draudžiamus civilinėje apyvartoje ginklus, ribotos civilinės apyvartos ginklus ir neribotos civilinės apyvartos ginklus;",
+            c: "A, B, C, D kategorijų ginklus;",
+            d: "šaunamuosius, nešaunamuosius ir šaltuosius ginklus.",
+          },
+          correct: "c",
+        },
+        {
+          q: "102. B kategorijai priskiriami:",
+          options: {
+            a: "šaunamieji ginklai, kurių konstrukcija leidžia panaudoti juos išardytus ar jie pakeičiami taip, kad tampa lengvai paslepiami;",
+            b: "visiškai netinkami naudoti ginklai;",
+            c: "vienašūviai trumpieji šaunamieji ginklai, šaudantys centrinio įskėlimo šoviniais;",
+            d: "dujiniai pistoletai (revolveriai).",
+          },
+          correct: "c",
+        },
+        {
+          q: "103. B kategorijai priskiriami:",
+          options: {
+            a: "ilgieji vienašūviai graižtviniai ir lygiavamzdžiai šaunamieji ginklai;",
+            b: "signaliniai šautuvai, pistoletai (revolveriai);",
+            c: "pusiau automatiniai arba pertaisomi trumpieji šaunamieji ginklai;",
+            d: "teisingi a ir c atsakymai.",
+          },
+          correct: "d",
+          notMix: "true",
+        },
+        {
+          q: "104. A kategorijai priskiriami:",
+          options: {
+            a: "šaunamieji ginklai, kurie atitinka kitų kategorijų kriterijus, tačiau joms nepriskiriami dėl nedidelės nukaunamosios galios, ir kurių sviedinio kinetinė energija yra nuo 2,5 J iki 7,5 J.;",
+            b: "pistoletų ir revolverių šoviniai su ekspansyviosiomis kulkomis ir kulkos tokiems šoviniams, išskyrus atvejus, kai tokius šovinius ir kulkas medžioklei naudoja tam teisę turintys asmenys;",
+            c: "ilgieji vienašūviai graižtviniai ir lygiavamzdžiai šaunamieji ginklai;",
+            d: "senovinės patrankos.",
+          },
+          correct: "b",
+        },
+        {
+          q: "105. A kategorijai priskiriami:",
+          options: {
+            a: "signaliniai šautuvai, pistoletai (revolveriai);",
+            b: "automatiniai šaunamieji ginklai;",
+            c: "pusiau automatiniai arba pertaisomi trumpieji šaunamieji ginklai;",
+            d: "elektros šoko įtaisai su iššaunamosiomis adatomis, lanksčiais laidais sujungtomis su aukštosios įtampos elektros energijos šaltiniu.",
+          },
+          correct: "b",
+        },
+        {
+          q: "106. C kategorijai priskiriami:",
+          options: {
+            a: "šaltieji ginklai, nepriskirti draudžiamiesiems ginklams;",
+            b: "ginklai, skirti taikiniui chemiškai sunaikinti;",
+            c: "pneumatiniai ginklai, kurių sviedinio kinetinė energija viršija 7,5 džaulio (J);",
+            d: "automatiniai lygiavamzdžiai ilgieji šaunamieji ginklai.",
+          },
+          correct: "c",
+        },
+        {
+          q: "107. Civilinėje apyvartoje draudžiami:",
+          options: {
+            a: "pneumatiniai ginklai, kurių sviedinio kinetinė energija viršija 7,5 J;",
+            b: "bet kokie savadarbiai šaunamieji ginklai;",
+            c: "senoviniai ginklai;",
+            d: "savadarbiai šaltieji ir šaunamieji ginklai.",
+          },
+          correct: "b",
+        },
+        {
+          q: "108. Civilinėje apyvartoje draudžiami:",
+          options: {
+            a: "kastetai;",
+            b: "mėtomosios žvaigždės;",
+            c: "elektros šoko įtaisai su iššaunamosiomis adatomis, lanksčiais laidais sujungtomis su aukštosios įtampos elektros energijos šaltiniu;",
+            d: "teisingi visi variantai.",
+          },
+          correct: "d",
+        },
+        {
+          q: "109. C kategorijai priskiriami:",
+          options: {
+            a: "duslintuvai;",
+            b: "dujiniai aerozoliniai įrenginiai, įtaisai;",
+            c: "dujiniai pistoletai (revolveriai);",
+            d: "dujų balionėliai.",
+          },
+          correct: "c",
+        },
+        {
+          q: "110. Elektros šoko įtaisas tai?",
+          options: {
+            a: "daiktas, kuris paveikia taikinį aukštos įtampos elektros srove;",
+            b: "nešaunamasis ginklas, iš kurio gali būti paleistos kenksmingos dirginančios medžiagos ar jų užtaisas;",
+            c: "nešaunamasis ginklas, sukonstruotas ar pritaikytas tiesiogiai prisilietus ar per atstumą paveikti taikinį elektros srove;",
+            d: "ginklas priskirtas draudžiamiems ginklams.",
+          },
+          correct: "c",
+        },
+        {
+          q: "111. Pagal klasifikaciją, templiniai ginklai, kurių visa įtempimo jėga yra nuo 500N iki 1200N, priklauso?",
+          options: {
+            a: "B kategorijos ginklams;",
+            b: "A kategorijos ginklams;",
+            c: "C kategorijos ginklams;",
+            d: "D kategorijos ginklams.",
+          },
+          correct: "a",
+        },
+        {
+          q: "112. Graižtviniai šaunamieji ginklai, kurių kalibras yra 12,7 mm arba didesnis, išskyrus senovinius ginklus ir senovinių ginklų kopijas, priskiriami?",
+          options: {
+            a: "A kategorijai;",
+            b: "B kategorijai;",
+            c: "C kategorijai;",
+            d: "D kategorijai.",
+          },
+          correct: "a",
+        },
+        {
+          q: "113. Nedidelės šaunamosios galios ginklas yra šaunamasis ginklas, kurio sviedinio kinetinė energija yra nedidesnė kaip:",
+          options: {
+            a: "virš 7,5 džaulio (J);",
+            b: "nuo 2,5 džaulio (J) iki 7,5 džaulio (J);",
+            c: "nuo 3,5 džaulio (J) iki 7,5 džaulio (J);",
+            d: "nuo 0 džaulio (J) iki 2,5 džaulio (J).",
+          },
+          correct: "b",
+        },
+        {
+          q: "114. Pneumatiniai ginklai priskiriami:",
+          options: {
+            a: "nešaunamiesiems ginklams, iš kurių paleidžiamos kulkos ar kitokio sviedinio kryptingas judėjimas atsiranda dėl suspausto oro ar kitų dujų jėgos;",
+            b: "šaunamiesiems ginklams, iš kurių paleidžiamos kulkos ar kitokio sviedinio kryptingas judėjimas atsiranda dėl suspausto oro ar kitų dujų jėgos;",
+            c: "pneumatiniai ginklai ginklams nepriskiriami;",
+            d: "nešaunamiesiems ginklams, skirtiems garso, šviesos signalui sukurti.",
+          },
+          correct: "a",
+        },
+        {
+          q: "115. Senovinio ginklo kopija, tai?",
+          options: {
+            a: "šaunamasis ginklas, pagamintas 1899 metais ir vėlesniais metais pagal iki 1870 metų sukurtą ginklo modelį;",
+            b: "šaunamasis ginklas, kurio modelis sukurtas iki 1870 metų ir kuris pagamintas iki 1899 metų;",
+            c: "nešaunamasis ginklas, pagamintas 1899 metais ir vėlesniais metais pagal iki 1870m. sukurtą ginklo modelį;",
+            d: "šaunamasis ginklas, pagamintas 1889 metais ir vėlesniais metais pagal iki 1780 m. sukurtą ginklo modelį.",
+          },
+          correct: "a",
+        },
+        {
+          q: "116. Kas yra šaunamasis ginklas?",
+          options: {
+            a: "ginklas, iš kurio sprogstamųjų medžiagų degimo produktų slėgio jėga per vamzdį paleidžiamos kulkos, sviediniai arba kenksmingosios, dirginančiosios ar kitos dujinės veikliosios medžiagos mechaniškai, termiškai, chemiškai ar kitaip taikiniui per atstumą paveikti arba duodamas garso ar šviesos signalas.",
+            b: "įrenginys ar daiktas, sukonstruotas ar pritaikytas gyviesiems ar kitiems objektams, taikiniams naikinti, žaloti ar kitaip jiems paveikti;",
+            c: "šaunamaisiais ginklais Ginklų ir šaudmenų kontrolės įstatyme laikomos ir pagrindinės šaunamųjų ginklų dalys;",
+            d: "teisingi A ir C atsakymų variantai.",
+          },
+          correct: "d",
+          notMix: "true",
+        },
+        {
+          q: "117. A kategrijai priskiriami?",
+          options: {
+            a: "automatiniai šaunamieji ginklai, kurie buvo perdirbti į pusiau automatinius šaunamuosius ginklus;",
+            b: "graižtviniai šaunamieji ginklai, kurių kalibras yra 12,7 mm arba didesnis;",
+            c: "duslintuvai;",
+            d: "templiniai ginklai, kurių visa įtempimo jėga viršija 1 200 niutonų (N);",
+            e: "teisingi visi variantai.",
+          },
+          correct: "e",
+        },
+        {
+          q: "118. Civilinėje apyvartoje draudžiami:",
+          options: {
+            a: "pneumatiniai ginklai, kurių sviedinio kinetinė energija viršija 120 J;",
+            b: "C kategorijų šaunamieji ginklai, neturintys identifikacinių numerių;",
+            c: "templiniai ginklai, kurių visa įtempimo jėga yra nuo 500 N iki 1200 N;",
+            d: "visi atsakymai teisingi.",
+          },
+          correct: "b",
+        },
+        {
+          q: "119. Kokie ginklai priskiriami C kategorijai?",
+          options: {
+            a: "dujų įrenginiai;",
+            b: "signaliniai ginklai;",
+            c: "pneumatiniai ginklai, kurių sviedinio kinetinė energija yra nuo 2,5 džaulio (J) iki 7,5 (J);",
+            d: "vienašūviai trumpieji šaunamieji ginklai.",
+          },
+          correct: "b",
+        },
+        {
+          q: "120. Asmenys, teisėtai turintys B kategorijos lygiavamzdžius ginklus, C kategorijos senovinių ginklų kopijas, turi teisę:",
+          options: {
+            a: "įsigyti ir laikyti kapsulių ir iki 3 kg parako;",
+            b: "įsigyti ir laikyti kapsulių ir iki 5 kg parako;",
+            c: "įsigyti ir laikyti 500 vnt. kapsulių ir iki 3 kg parako;",
+            d: "neribojamą kiekį kapsulių ir parako.",
+          },
+          correct: "a",
+        },
+        {
+          q: "121. A kategorijai priskiriami:",
+          options: {
+            a: "lazeriniai taikikliai;",
+            b: "duslintuvai;",
+            c: "naktiniai taikikliai;",
+            d: "teisingi B ir C variantai.",
+          },
+          correct: "b",
+          notMix: "true",
+        },
+        {
+          q: "122. Kas duoda visas komandas tire ar šaudykloje?",
+          options: {
+            a: "šaudymo vadovas;",
+            b: "instruktorius;",
+            c: "teisėjas;",
+            d: "teisingi visi variantai.",
+          },
+          correct: "a",
+        },
+        {
+          q: "123. Pistoleto ardymas pradedamas nuo:",
+          options: {
+            a: "spynos pertraukimo, siekiant patikrinti ar šovinio lizde nėra šovinio;",
+            b: "dėtuvės išėmimo;",
+            c: "ginklo apžiūrėjimo;",
+            d: "kontrolinio nuleistuko paspaudimo.",
+          },
+          correct: "b",
+        },
+        {
+          q: "124. Ar galima šaudykloje, atliekant šaudymo pratybas, ginklo vamzdį nukreipti į žmogų?",
+          options: {
+            a: "galima tik neužtaisytą;",
+            b: "galima, jei ginklas įjungtu saugikliu;",
+            c: "negalima;",
+            d: "galima, jei ginklas neužtaisytas ir su įjungtu saugikliu.",
+          },
+          correct: "c",
+        },
+        {
+          q: "125. Kuris iš šių sakinių neatitinka saugaus elgesio su ginklu pagrindinių taisyklių?",
+          options: {
+            a: "su ginklu elgtis taip, tarytum jis būtų užtaisytas;",
+            b: "niekada nenukreipti ginklo į objektą, į kurį neketinama šauti;",
+            c: "laikyti pirštą ant nuleistuko, jei nėra tiesioginio ginklo panaudojimo poreikio;",
+            d: "įsitikinti dėl taikinio bei zonos už jo.",
+          },
+          correct: "c",
+        },
+        {
+          q: "126. Toliausiai lekia:",
+          options: {
+            a: "lygiavamzdžio šautuvo kulka;",
+            b: "lygiavamzdžio šautuvo šratai;",
+            c: "pneumatinio ginklo kulka;",
+            d: "graižtvinio ginklo kulka.",
+          },
+          correct: "d",
+        },
+        {
+          q: "127. Graižtvinių ginklų šovinių kalibrai matuojami:",
+          options: {
+            a: "colių dalimis;",
+            b: "milimetrais;",
+            c: "coliais;",
+            d: "teisingi a ir b atsakymai.",
+          },
+          correct: "d",
+          notMix: "true",
+        },
+        {
+          q: "128. Šaunant 45 laipsnių kampu į kietą paviršių kulka rikošetuos:",
+          options: {
+            a: "45 laipsnių kampu;",
+            b: "90 laipsnių kampu;",
+            c: "rikošeto prognozuoti neįmanoma;",
+            d: "90 laipsnių kampu, jei kulka yra kieto metalo apvalkalu.",
+          },
+          correct: "c",
+        },
+        {
+          q: "129. Tiruose ir šaudyklose vienu metu ugnies linijoje galima šaudyti:",
+          options: {
+            a: "tik iš ilgųjų arba trumpųjų ginklų;",
+            b: "tik iš lygiavamzdžių arba graižtvinių ginklų;",
+            c: "iš visų ginklų, numatytų tiro ar šaudyklos pase;",
+            d: "teisingi A ir B variantai.",
+          },
+          correct: "d",
+          notMix: "true",
+        },
+        {
+          q: "130. Treniruotis šaudyti iš turimo savigynos tikslams B kategorijos trumpojo šaunamojo ginklo galima:",
+          options: {
+            a: "karjeruose, aptvertose teritorijose, šaudymo stenduose jei tai negresia saugumui;",
+            b: "miške, kitoje teritorijoje, jei tai negresia saugumui;",
+            c: "medžioklės plotuose, įsirašius į medžioklės lapą;",
+            d: "šaudyklose ir tiruose.",
+          },
+          correct: "d",
+        },
+        {
+          q: "131. A kategorijai priskiriami:",
+          options: {
+            a: "automatiniai šaunamieji ginklai, kurie buvo perdirbti į pusiau automatinius šaunamuosius ginklus;",
+            b: "graižtviniai šaunamieji ginklai, kurių kalibras yra 12,7 mm arba didesnis;",
+            c: "duslintuvai;",
+            d: "templiniai ginklai, kurių visa įtempimo jėga viršija 1 200 niutonų (N);",
+            e: "teisingi visi variantai.",
+          },
+          correct: "e",
+        },
+        {
+          q: "132. Ekspansyvioji kulka:",
+          options: {
+            a: "kulka su sustiprintu smaigaliu, kuri skverbdamasi į kliūtį staiga deformuojasi arba suyra į specialiai suformuotas skeveldras;",
+            b: "kulka su išbalansuotu svoriu, kuri pataikiusi į kliūtį staiga keičia kryptį;",
+            c: "kulka su sustiprintu apvalkalu, kuri skverbdamasi į kliūtį minimaliai deformuojasi;",
+            d: "kulka su susilpnintu smaigaliu, kuri skverbdamasi į kliūtį staiga deformuojasi arba suyra į specialiai suformuotas skeveldras.",
+          },
+          correct: "d",
+        },
+        {
+          q: "133. Draudžiama panaudoti šaunamąjį ginklą:",
+          options: {
+            a: "žmonių susibūrimo vietose;",
+            b: "norint iškviesti pagalbą ar perspėti;",
+            c: "žmonių susibūrimo vietose, jeigu nuo to gali nukentėti pašaliniai asmenys;",
+            d: "viešose vietose.",
+          },
+          correct: "c",
+        },
+        {
+          q: "134. Po to, kai buvo duota komanda nutraukti šaudymą arba iššovus paskutinį šūvį, asmuo turi:",
+          options: {
+            a: "išnešti užtaisytą ginklą už ugnies linijos ribų;",
+            b: "nedelsiant išimti dėtuvę iš ginklo, šovinius iš vamzdžio (iš revolverio būgnelio) ir, nepalikęs savo pozicijos, parodyti šaudymo vadovui ginklą su atitraukta spyna, kad šaudymo vadovas galėtų įsitikinti, jog ginklas neužtaisytas;",
+            c: "parodyti šaudymo vadovui ginklą, kad šaudymo vadovas galėtų įsitikinti, jog ginklas neužtaisytas;",
+            d: "įsidėti ginklą į dėklą.",
+          },
+          correct: "b",
+        },
+        {
+          q: "135. Lietuvos Respublikos administracinių nusižengimų kodekse yra numatyta administracinė atsakomybė:",
+          options: {
+            a: "už ginklo, šaudmenų nešiojimą, gabenimą, kai tai daro neblaivus asmuo, kuriam nustatomas neblaivumo (girtumo) laipsnis (nuo 0,41 promilės iki 1,5 promilės);",
+            b: "už ginklo, šaudmenų nešiojimą, gabenimą, kai tai daro neblaivus asmuo, kuriam nustatomas neblaivumo (girtumo) laipsnis (nuo 1,51 promilės iki 2 ,5 promilės);",
+            c: "už ginklo, šaudmenų nešiojimą gabenimą, kai tai daro neblaivus asmuo, kuriam nustatomas lengvas neblaivumo (girtumo) laipsnis (nuo 0,0 promilės iki 1.5 promilės);",
+            d: "teisingi a ir b atsakymo variantai.",
+          },
+          correct: "d",
+          notMix: "true",
+        },
+        {
+          q: "136. Ginklų, ginklų priedėlių, šaudmenų, jų dalių savininkas, valdytojas, naudotojas privalo:",
+          options: {
+            a: "ne vėliau kaip per 10 darbo dienų nuo ginklo laikymo vietos pasikeitimo ar vyresnių kaip 14 metų asmenų apsigyvenimo gyvenamojoje vietoje, kurioje laikomas ginklas, informuoti apie tai policijos įstaigą;",
+            b: "ne vėliau kaip per 10 darbo dienų nuo ginklo naudotojo gyvenamosios vietos pasikeitimo informuoti apie tai policijos įstaigą;",
+            c: "pranešti policijos įstaigai apie ginklo, ginklo priedėlio, šaudmenų, jų dalių, ginklo pažymėjimo vagystę ar praradimą ir pateikti prašymą policijos įstaigai dėl ginklo pažymėjimo dublikato išdavimo;",
+            d: "teisingi visi atsakymo variantai.",
+          },
+          correct: "d",
+        },
+        {
+          q: "137. Senovinis ginklas priskiriamas:",
+          options: {
+            a: "A kategorijai;",
+            b: "B kategorijai;",
+            c: "C kategorijai;",
+            d: "D kategorijai.",
+          },
+          correct: "d",
+        },
+        {
+          q: "138. Asmuo, turintis leidimą nešiotis ginklus savigynai, gali įsigyti ir turėti:",
+          options: {
+            a: "kapsulių;",
+            b: "iki 3 kg parako;",
+            c: "šaudmenų tik tam ginklui, kuris nurodytas ginklo pažymėjime;",
+            d: "teisingi visi atsakymo variantai.",
+          },
+          correct: "d",
+        },
+        {
+          q: "139. B kategorijos ginklams priskiriami:",
+          options: {
+            a: "pertaisomieji trumpieji šaunamieji ginklai;",
+            b: "pertaisomieji ilgieji šaunamieji ginklai;",
+            c: "bet kokie B kategorijos šaunamieji ginklai, kurie buvo perdirbti į signalinius, dujinius ar imitacinius ginklus;",
+            d: "teisingi visi atsakymo variantai.",
+          },
+          correct: "d",
+        },
+        {
+          q: "140. Ginklas iš ugnies linijos gali būti išneštas:",
+          options: {
+            a: "tik leidus šaudymo vadovui;",
+            b: "tik leidus mokymų vadovui;",
+            c: "šaudyklos vadovui leidus;",
+            d: "teisingi visi atsakymo variantai.",
+          },
+          correct: "a",
+        },
+        {
+          q: "141. Fizinis asmuo, turintis daugiau kaip 5 vnt. bet ne daugiau kaip 12 vnt. B kat. ginklų, gyvenamoje patalpoje turi būti:",
+          options: {
+            a: "įrengta apsaugos sistema;",
+            b: "įrengta užpuolimo signalizacija;",
+            c: "įrengta apsauginė įsilaužimo signalizacija, sudaryta bent iš vieno apsaugos ruožo;",
+            d: "signalizacijos įrengti neprivaloma.",
+          },
+          correct: "a",
+        },
+      ];
+
+      // Egzamino kintamieji
+      let examQuestions = [];
+      let currentExamIndex = 0;
+      let examScore = 0;
+      let examAnswers = [];
+      let examRunning = false;
+      let examStartedAt = 0;
+      let examTimerId = null;
+
+      // Mokymosi kintamieji
+      let learnTotal = 0;
+      let learnCorrect = 0;
+      let learnWrong = 0;
+      let currentLearnQuestion = null;
+
+      function shuffle(array) {
+        // Fisher–Yates: kiekviena klausimų tvarka vienodai tikėtina.
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
+      function shuffleAnswers(question) {
+        // Atsakymai, kurie nurodo kitus variantus (pvz. „teisingi a ir b“),
+        // turi likti ta pačia tvarka, kitaip pasikeičia jų prasmė.
+        if (question.notMix === "true" || question.notMix === true) {
+          return { ...question };
+        }
+        const entries = shuffle(Object.entries(question.options));
+        const labels = Object.fromEntries(
+          entries.map(([originalKey], index) => [
+            originalKey,
+            String.fromCharCode(97 + index),
+          ]),
+        );
+        const options = {};
+        for (const [originalKey, text] of entries) {
+          // Keisti tik nuorodas į atsakymus, o ne ginklų kategorijų raides.
+          options[labels[originalKey]] = text.replace(
+            /^(teisingi\s+)?([a-e])\s+ir\s+([a-e])(?=\s+(?:variant|atsakym))/i,
+            (_, prefix, first, second) =>
+              `${prefix || ""}${labels[first.toLowerCase()].toUpperCase()} ir ${labels[second.toLowerCase()].toUpperCase()}`,
+          );
+        }
+        return { ...question, options, correct: labels[question.correct] };
+      }
+
+      function switchTab(tab) {
+        document.getElementById("btn-exam").classList.remove("active");
+        document.getElementById("btn-learn").classList.remove("active");
+        document.getElementById("exam-container").classList.add("hidden");
+        document.getElementById("learn-container").classList.add("hidden");
+
+        document.getElementById(`btn-${tab}`).classList.add("active");
+        document.getElementById(`${tab}-container`).classList.remove("hidden");
+      }
+
+      // --- Egzamino logika ---
+      function formatExamTime(milliseconds) {
+        const seconds = Math.floor(milliseconds / 1000);
+        return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+      }
+
+      function updateExamTimer() {
+        document.getElementById("exam-timer").innerText =
+          `Laikas: ${formatExamTime(performance.now() - examStartedAt)}`;
+      }
+
+      function startExam() {
+        if (examRunning) return;
+        switchTab("exam");
+        examQuestions = shuffle([...allQuestions])
+          .slice(0, 10)
+          .map(shuffleAnswers);
+        currentExamIndex = 0;
+        examScore = 0;
+        examAnswers = [];
+        examRunning = true;
+        examStartedAt = performance.now();
+        clearInterval(examTimerId);
+        updateExamTimer();
+        examTimerId = setInterval(updateExamTimer, 250);
+        document.getElementById("exam-intro").classList.add("hidden");
+        document.getElementById("exam-timer").classList.remove("hidden");
+        document.getElementById("exam-end-btn").classList.remove("hidden");
+        document.getElementById("exam-result").innerHTML = "";
+        document.getElementById("exam-result").classList.add("hidden");
+        document
+          .getElementById("exam-question-area")
+          .classList.remove("hidden");
+        document.getElementById("exam-progress").classList.remove("hidden");
+        showExamQuestion();
+      }
+
+      function showExamQuestion() {
+        const qArea = document.getElementById("exam-question-area");
+        const progress = document.getElementById("exam-progress");
+
+        if (currentExamIndex >= examQuestions.length) {
+          endExam();
+          return;
+        }
+
+        const q = examQuestions[currentExamIndex];
+        progress.innerText = `Klausimas ${currentExamIndex + 1} / ${examQuestions.length}`;
+
+        let html = `<div class="question">${q.q}</div><div class="options">`;
+        for (const [key, value] of Object.entries(q.options)) {
+          html += `<button onclick="answerExam('${key}')">${key.toUpperCase()}) ${value}</button>`;
+        }
+        html += `</div>`;
+        qArea.innerHTML = html;
+      }
+
+      function answerExam(selected) {
+        const q = examQuestions[currentExamIndex];
+        if (
+          !examRunning ||
+          !q ||
+          !Object.prototype.hasOwnProperty.call(q.options, selected)
+        ) {
+          return;
+        }
+        examAnswers.push(selected);
+        if (selected === q.correct) {
+          examScore++;
+        }
+        currentExamIndex++;
+        showExamQuestion();
+      }
+
+      function endExam() {
+        if (!examRunning) return;
+        const elapsed = performance.now() - examStartedAt;
+        examRunning = false;
+        clearInterval(examTimerId);
+        examTimerId = null;
+        document.getElementById("exam-timer").classList.add("hidden");
+        document.getElementById("exam-end-btn").classList.add("hidden");
+        document.getElementById("exam-question-area").classList.add("hidden");
+        document.getElementById("exam-progress").classList.add("hidden");
+
+        const resArea = document.getElementById("exam-result");
+        resArea.classList.remove("hidden");
+
+        // Egzaminas išlaikytas, jei padaryta ne daugiau kaip 1 klaida
+        const maxMistakes = 1;
+        const requiredScore = examQuestions.length - maxMistakes;
+        const passed = examScore >= requiredScore;
+
+        resArea.innerHTML = `
+            <h3>Egzaminas baigtas!</h3>
+            <p>Jūsų rezultatas: <strong>${examScore} / ${examQuestions.length}</strong></p>
+            <p style="font-size: 20px; font-weight: bold; color: ${passed ? "green" : "red"};">
+                ${passed ? "SVEIKINAME, IŠLAIKĖTE!" : "NEIŠLAIKĖTE (leidžiama 1 klaida)"}
+            </p>
+            <p>Sugaištas laikas: <strong>${formatExamTime(elapsed)}</strong></p>
+            <p>Atsakyta: ${examAnswers.length} / ${examQuestions.length}.</p>
+            <p>Teisingai: ${examScore}. Neteisingai: ${examAnswers.length - examScore}. Neatsakyta: ${examQuestions.length - examAnswers.length}.</p>
+            <button class="next-btn" onclick="startExam()">Bandyti dar kartą</button>
+            <section class="exam-review" aria-labelledby="exam-review-title">
+              <h3 id="exam-review-title">Atsakymų peržiūra</h3>
+              <p>Prie kiekvieno klausimo pažymėtas jūsų pasirinkimas ir teisingas atsakymas.</p>
+            </section>
+        `;
+
+        const review = resArea.querySelector(".exam-review");
+        examQuestions.forEach((question, index) => {
+          const selected = examAnswers[index];
+          const isAnswered = selected !== undefined;
+          const isCorrect = selected === question.correct;
+          const card = document.createElement("article");
+          card.className = "review-question";
+
+          const status = document.createElement("p");
+          status.className = `review-status ${isAnswered ? (isCorrect ? "correct" : "wrong") : ""}`;
+          status.textContent = `Klausimas ${index + 1} / ${examQuestions.length} — ${!isAnswered ? "Neatsakyta" : isCorrect ? "Teisingai" : "Neteisingai"}`;
+          card.appendChild(status);
+
+          const title = document.createElement("p");
+          title.className = "question";
+          title.textContent = question.q;
+          card.appendChild(title);
+
+          const options = document.createElement("ul");
+          options.className = "review-options";
+          for (const [key, value] of Object.entries(question.options)) {
+            const option = document.createElement("li");
+            option.textContent = `${key.toUpperCase()}) ${value}`;
+            const labels = [];
+            if (key === selected) labels.push("Jūsų pasirinkimas");
+            if (key === question.correct) {
+              option.className = "correct";
+              labels.push("Teisingas atsakymas");
+            } else if (key === selected) {
+              option.className = "wrong";
+            }
+            if (labels.length) {
+              const label = document.createElement("span");
+              label.className = "answer-label";
+              label.textContent = labels.join(" · ");
+              option.appendChild(label);
+            }
+            options.appendChild(option);
+          }
+          card.appendChild(options);
+          review.appendChild(card);
+        });
+      }
+
+      function startLearn() {
+        switchTab("learn");
+        nextLearnQuestion();
+      }
+
+      function nextLearnQuestion() {
+        const qArea = document.getElementById("learn-question-area");
+        document.getElementById("learn-next-btn").classList.add("hidden");
+
+        currentLearnQuestion = shuffleAnswers(
+          allQuestions[Math.floor(Math.random() * allQuestions.length)],
+        );
+
+        let html = `<div class="question">${currentLearnQuestion.q}</div><div class="options">`;
+        for (const [key, value] of Object.entries(
+          currentLearnQuestion.options,
+        )) {
+          html += `<button id="learn-opt-${key}" onclick="answerLearn('${key}')">${key.toUpperCase()}) ${value}</button>`;
+        }
+        html += `</div>`;
+        qArea.innerHTML = html;
+      }
+
+      function answerLearn(selected) {
+        const correctKey = currentLearnQuestion.correct;
+        const isCorrect = selected === correctKey;
+
+        learnTotal++;
+        if (isCorrect) learnCorrect++;
+        else learnWrong++;
+
+        for (const key of Object.keys(currentLearnQuestion.options)) {
+          const btn = document.getElementById(`learn-opt-${key}`);
+          btn.disabled = true;
+          if (key === correctKey) {
+            btn.classList.add("correct");
+          } else if (key === selected && !isCorrect) {
+            btn.classList.add("wrong");
+          }
+        }
+
+        updateStats();
+        document.getElementById("learn-next-btn").classList.remove("hidden");
+      }
+
+      function updateStats() {
+        document.getElementById("stat-total").innerText = learnTotal;
+        document.getElementById("stat-correct").innerText = learnCorrect;
+        document.getElementById("stat-wrong").innerText = learnWrong;
+
+        const correctPct =
+          learnTotal > 0 ? Math.round((learnCorrect / learnTotal) * 100) : 0;
+        const wrongPct =
+          learnTotal > 0 ? Math.round((learnWrong / learnTotal) * 100) : 0;
+
+        document.getElementById("stat-correct-pct").innerText = correctPct;
+        document.getElementById("stat-wrong-pct").innerText = wrongPct;
+      }
+    </script>
+  </body>
+</html>
